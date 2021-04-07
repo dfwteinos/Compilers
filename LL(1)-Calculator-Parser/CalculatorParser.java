@@ -82,12 +82,13 @@ public class CalculatorParser {
         /* The length of the expression */
         eos = expression.length();
 
-        
+        /* Here, the root of our Tree will start */
+        tree.root = new Node("exp");
 
-        if(exp() && expression.equals(verify_exp)){
+        if(exp(tree.root) && expression.equals(verify_exp)){
             System.out.println("Value is:" + verify_exp);
         }
-
+        
         else{
             System.out.println("Parse error");
         }
@@ -97,29 +98,43 @@ public class CalculatorParser {
     }
 
     /* # 1 */
-    public static boolean exp(){
+    public static boolean exp(Node btree){
 
         CalculatorParser.cur_token = nextToken();
 
         if( CalculatorParser.cur_token.equals("(") ){
-            return(term() && exp2() );
+
+            btree.insertLeft("term");
+            btree.insertRight("exp2");
+            return(term(btree.left) && exp2(btree.right) );
         }
 
         if(equalsNumbers()){
-            return(term() && exp2());
+
+            btree.insertLeft("term");
+            btree.insertRight("exp2");
+            return(term(btree.left) && exp2(btree.right));
         }
 
         return false;
     }
 
     /* # 2 */
-    public static boolean exp2(){
+    public static boolean exp2(Node btree){
 
         if( equalStrings("+") || equalStrings("-")){
 
+            btree.insertSymbol("-");
+            if(equalStrings("+")){
+                btree.insertSymbol("+");
+            }
+
             CalculatorParser.verify_exp += CalculatorParser.cur_token;
             CalculatorParser.cur_token = nextToken();
-            return(term() && exp2());
+         
+            btree.insertLeft("term");
+            btree.insertRight("exp2");
+            return(term(btree.left) && exp2(btree.right));
         }
         
         else if(equalStrings(")")|| eof()){
@@ -130,35 +145,45 @@ public class CalculatorParser {
     }
 
     /* #5 */
-    public static boolean term(){
+    public static boolean term(Node btree){
 
         if( CalculatorParser.cur_token.equals("(") ){
-            return(factor() && term2() );
+            
+            btree.insertLeft("factor");
+            btree.insertRight("term2");
+            return(factor(btree.left) && term2(btree.right) );
         }
 
         if(equalsNumbers()){
-            return(factor() && term2());
+
+            btree.insertLeft("factor");
+            btree.insertRight("term2");
+            return(factor(btree.left) && term2(btree.right));
         }
 
         return false;
     }
 
     /* # 6 */
-    public static boolean term2(){
+    public static boolean term2(Node btree){
 
         if( equalStrings("*") ){
 
+            btree.insertSymbol("*");
             CalculatorParser.verify_exp += CalculatorParser.cur_token;
             CalculatorParser.cur_token = nextToken();
 
             if( !eof()){
                 if( ("*").equals(CalculatorParser.cur_token)){
+                    btree.insertSymbol("**");
                     CalculatorParser.verify_exp += CalculatorParser.cur_token;
                     CalculatorParser.cur_token = nextToken();
                 }
             }
 
-            return(factor() && term2());
+            btree.insertLeft("factor");
+            btree.insertRight("term2");
+            return(factor(btree.left) && term2(btree.right));
         }
 
         else if(equalStrings("+") || equalStrings("-") || equalStrings(")") || eof()){
@@ -168,12 +193,19 @@ public class CalculatorParser {
     }
 
     /* #8 */
-    public static boolean factor(){
+    public static boolean factor(Node btree){
         
+        btree.insertLeft("exp");
+
         if( CalculatorParser.cur_token.equals("(") ){
 
+            btree.insertSymbol("(");
             CalculatorParser.verify_exp += CalculatorParser.cur_token;
-            if (exp()){
+
+            btree.left.rule = "exp";
+            if (exp(btree.left)){
+
+                btree.insertSymbol(")");
                 CalculatorParser.verify_exp += CalculatorParser.cur_token;
                 CalculatorParser.cur_token = nextToken();
                 return true;
@@ -181,31 +213,39 @@ public class CalculatorParser {
         }
 
         if(equalsNumbers()){
-            return( num() );
+            btree.left.rule = "num";
+            // btree.insertLeft("num");
+            return( num(btree.left) );
         }
 
         return false;
     }
 
     /* # 10 */
-    public static boolean num(){
+    public static boolean num(Node btree){
          
         if(equalsNumbers()){
-            return(digit() && post());
+
+            btree.insertLeft("digit");
+            btree.insertRight("post");
+            return(digit(btree.left) && post(btree.right));
         }
 
         return false;
     }
 
     /* # 11 */
-    public static boolean post(){
+    public static boolean post(Node btree){
 
         if(equalsNumbers()){
-            return( num());
+            btree.insertLeft("num");
+            return( num(btree.left));
         }
 
         else if( equalStrings("+") || equalStrings("-") || equalStrings("*") || equalStrings(")") || eof() ){
             if(equalStrings("*")){
+
+                btree.insertSymbol("*");
                 CalculatorParser.verify_exp += CalculatorParser.cur_token;
                 CalculatorParser.cur_token = nextToken();
             }
@@ -216,10 +256,11 @@ public class CalculatorParser {
     }
 
     /* # 13 */
-    public static boolean digit(){
+    public static boolean digit(Node btree){
 
         if(equalsNumbers()){
 
+            btree.insertSymbol(CalculatorParser.cur_token);
             CalculatorParser.verify_exp += CalculatorParser.cur_token;
 
             /* Checking if we have any forbidden number */
