@@ -21,7 +21,6 @@ class Node {
     public void insertSymbol(String item){
         key = item;
     }
-
 }
 
 public class BinaryTree {
@@ -39,22 +38,4 @@ public class BinaryTree {
     {
         root = null;
     }
-
-    public static void main(final String[] args){
-
-        BinaryTree tree = new BinaryTree();
-        tree.root = new Node("exp");
-        LeftIns(tree.root, "exp2");
-        System.out.println(tree.root.left.left.rule);
-    }
-
-    public static void LeftIns(Node tree, String item){
-        tree.insertLeft(item);
-        bar(tree.left, "poutses");
-    }
-
-    public static void bar(Node tree, String item){
-        tree.insertLeft(item);
-    }
-
 }

@@ -40,6 +40,7 @@
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.*;
 
 public class CalculatorParser {
 
@@ -86,7 +87,20 @@ public class CalculatorParser {
         tree.root = new Node("exp");
 
         if(exp(tree.root) && expression.equals(verify_exp)){
-            System.out.println("Value is:" + verify_exp);
+
+            /* In order to simplify things */
+            /* We are replacing ** => ^ */
+            String fixedExp = expression.replaceAll(Pattern.quote("**"),"^");
+
+            System.out.println("fixed is:" +fixedExp);
+
+            String spaceExp = applySpaces(fixedExp);
+            
+            System.out.println("String with spaces is:"+spaceExp);
+            
+            int finalExp = EvaluateString.main(spaceExp);
+
+            System.out.println("Result is:"+finalExp);
         }
         
         else{
@@ -96,6 +110,11 @@ public class CalculatorParser {
         /* Close the input stream scanner */
         sc.close();
     }
+
+
+/*=================================================================*/
+/*           Recursive Functions == (Non) Terminal Rules           */
+/*=================================================================*/
 
     /* # 1 */
     public static boolean exp(Node btree){
@@ -199,13 +218,11 @@ public class CalculatorParser {
 
         if( CalculatorParser.cur_token.equals("(") ){
 
-            btree.insertSymbol("(");
             CalculatorParser.verify_exp += CalculatorParser.cur_token;
 
             btree.left.rule = "exp";
             if (exp(btree.left)){
 
-                btree.insertSymbol(")");
                 CalculatorParser.verify_exp += CalculatorParser.cur_token;
                 CalculatorParser.cur_token = nextToken();
                 return true;
@@ -300,6 +317,16 @@ public class CalculatorParser {
         else return false;
     }
 
+
+
+
+/*=================================================================*/
+/*                  Auxiliarry Functions                           */
+/*=================================================================*/
+
+
+
+
     /* Function to determinate if 2 strings are the same */
     public static boolean equalStrings(final String string){
 
@@ -338,6 +365,7 @@ public class CalculatorParser {
         return false;
     }   
 
+    /* Iterative function in order to check if a number is "forbidden" */
     public static boolean checkForbiden(int counter){
 
         counter--;
@@ -354,5 +382,62 @@ public class CalculatorParser {
         }
 
         return false;
+    }
+
+    /* Function to apply blank spaces between numbers and symbols */
+    public static String applySpaces(String expression){
+
+        /* The list with the 'tokens' */
+        List<String> ll = new LinkedList<>();
+
+        /* Current string of our list */
+        String cur = "";
+        String dig = "";
+        
+
+        /* Boolean variable to determinate if we have a serial number of digits */
+        Boolean digits = false;
+
+        for(int i = 0; i < expression.length(); i++) {
+        
+            cur = String.valueOf(expression.charAt(i));
+            CalculatorParser.cur_token = cur;    
+            if(equalsNumbers()){
+                digits = true;
+                dig += cur;
+            }
+
+            else {
+                digits = false;
+            }
+
+            if(digits==false){
+                
+                if(dig.length()>0){
+                    ll.add(dig);
+                    ll.add(cur);
+                    cur = "";
+                    dig = "";
+                }
+                
+                else{
+                    ll.add(cur);
+                    cur = "";
+                }
+            }
+        }
+
+        if(digits==true){
+            ll.add(dig);
+        }
+
+        String finalS = "";
+        for(int j=0; j<ll.size(); j++){
+            finalS+=ll.get(j);
+            if(j!=ll.size()-1){
+                finalS+=" ";   
+            }
+        }
+        return finalS;
     }
 }
