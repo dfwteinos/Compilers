@@ -90,7 +90,7 @@ public class CalculatorParser {
             
             int finalExp = EvaluateString.main(spaceExp);
 
-            System.out.println("Result is: "+finalExp);
+            System.out.println(finalExp);
         }
         
         else{
