@@ -4,19 +4,19 @@
 *           |  '+' , '-' |    '**'    |    '0' .. '9'    |    '('     |     ')'     |   '$'   |
 * --------------------------------------------------------------------------------------------
 *           |            |            |                  |            |             |         |
-*   exp2    | term, exp2 |    error   |     error        |    error   |      ε      |    ε    |
+*   exp2    | term, exp2 |    error   |      error       |    error   |      ε      |    ε    |
 *           |            |            |                  |            |             |         |
 *---------------------------------------------------------------------------------------------
 *           |            |            |                  |            |             |         |
-*   term2   |     ε      |factor,term2|     error        |    error   |      ε      |    ε    |
+*   term2   |     ε      |factor,term2|      error       |    error   |      ε      |    ε    |
 *           |            |            |                  |            |             |         |
 *---------------------------------------------------------------------------------------------
 *           |            |            |                  |            |             |         |
-*   factor  |   error    |   error    |      num         |    exp )   |    error    |  error  |
+*   factor  |   error    |   error    |       num        |    exp )   |    error    |  error  |
 *           |            |            |                  |            |             |         |
 *---------------------------------------------------------------------------------------------
 *           |            |            |                  |            |             |         |
-*    num    |   error    |   error    |  digit , post    |   error    |    error    |  error  |
+*    num    |   error    |   error    |   digit , post   |   error    |    error    |  error  |
 *           |            |            |                  |            |             |         |
 *---------------------------------------------------------------------------------------------   
 *           |            |            |                  |            |             |         |
@@ -111,15 +111,16 @@ public class CalculatorParser {
 
         CalculatorParser.cur_token = nextToken();
 
-        if( CalculatorParser.cur_token.equals("(") ){
+        if( CalculatorParser.cur_token.equals("(") || equalsNumbers() ){
 
             return(term() && exp2() );
         }
 
+        /*
         if(equalsNumbers()){
 
             return(term() && exp2());
-        }
+        }*/
 
         return false;
     }
@@ -144,15 +145,16 @@ public class CalculatorParser {
     /* #5 */
     public static boolean term(){
 
-        if( CalculatorParser.cur_token.equals("(") ){
+        if( CalculatorParser.cur_token.equals("(") || equalsNumbers() ){
             
             return(factor() && term2() );
         }
 
+        /*
         if(equalsNumbers()){
 
             return(factor() && term2());
-        }
+        }*/
 
         return false;
     }
