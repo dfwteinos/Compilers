@@ -4,6 +4,8 @@ In this repository we explore the fundamental concepts and techniques behind a c
 
 In this directory, I've implemented a basic LL(1) Parser for simple operations, such as `'+'` , `'-'` , `'**'` (meaning: `'^'`).
 
+I've implemented 2 possible approaches for this assignment. One is by using exclusively Recursion `../RecEval` and the other by utilizing the help of the Stack data structure. Both of these approaches are producing the **same** result.
+
 At first, they gave us an non-LL(1) grammar. Ofcourse, we removed **ambiguity**, we've added **precedence** between operators, also we removed **left recursion** and we've applied **left factoring** where it was needed.
 We had the following grammar:
 
@@ -31,7 +33,7 @@ We had the following grammar:
  13. digit -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
  ```
  
- We also have the **lookahead table** in the comments of `LL(1)-Calculator-Parser/CalculatorParser`.
+ We also have the **lookahead table** in the comments of `LL(1)-Calculator-Parser/(RecEval|StackEval)/CalculatorParser.java`.
  
  ## Compile & Run:
  
