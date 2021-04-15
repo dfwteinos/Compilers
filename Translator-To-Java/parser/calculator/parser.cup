@@ -1,0 +1,61 @@
+/* Simple +/-/* expression language; parser evaluates constant expressions on the fly*/
+/**
+ *  Package and Import Specifications
+ */
+import java_cup.runtime.*;
+
+/**
+ *  Usercode Components
+ */
+parser code {:
+    // Connect this parser to a scanner!
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+scan with {: return s.next_token(); :};
+
+/**
+ *  Symbol Lists
+ */
+
+/* Terminals (tokens returned by the scanner). */
+terminal            PLUS, LPAREN, RPAREN, SEMI, COMMA, BEGIN, END;
+terminal Integer    NUMBER;        // our scanner provides numbers as integers
+terminal String     STRING_LITERAL, SENTENCE, IDENT;
+
+/*  Non terminals */
+non terminal           program;
+non terminal String    decl, sent, ids, args, more;      // used to store evaluated subexpressions
+
+/**
+ *  The Grammar Rules
+ */
+
+program ::= decl:e {:
+			System.out.println("import java.lang.Math;\n");
+			System.out.println("public class Main {");
+			System.out.println("\tpublic static void main(String[] args) {");
+			System.out.printf("%s", e);
+			System.out.println("\t}");
+			System.out.println("}");
+			:}
+	        ;
+
+decl        ::= sent: sen ids:e SEMI            {: RESULT = String.format("\t\tSystem.out.println(%s(%s));\n", sen, e); :}
+            ;
+
+sent        ::= SENTENCE: sen                   {: RESULT = String.format("%s", sen); :}                 
+            |                                   {: RESULT = ""; :}
+            ;
+
+ids         ::= LPAREN args: fin_arg            {: RESULT = String.format("%s", fin_arg); :}                 
+            ;
+
+args        ::= sent: sen more: e               {: RESULT = String.format("%s%s", sen, e); :}                 
+            ;
+
+more        ::= COMMA args: arg                 {: RESULT = String.format(",%s", arg); :}                        
+            | RPAREN: rpar                      {: RESULT = String.format(""); :}    
+            ;
