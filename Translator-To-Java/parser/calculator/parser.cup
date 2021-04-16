@@ -27,14 +27,14 @@ terminal String     STRING_LITERAL, SENTENCE, IDENT;
 
 /*  Non terminals */
 non terminal           program;
-non terminal String    decl, sent, ids, args, more;      // used to store evaluated subexpressions
+non terminal String    func_dec, decl, sent, ids, args, more;      // used to store evaluated subexpressions
 
 /**
  *  The Grammar Rules
  */
 
-program ::= decl:e {:
-			System.out.println("import java.lang.Math;\n");
+program ::= func_dec:e {:
+			System.out.println("\n\nimport java.lang.Math;\n");
 			System.out.println("public class Main {");
 			System.out.println("\tpublic static void main(String[] args) {");
 			System.out.printf("%s", e);
@@ -43,7 +43,12 @@ program ::= decl:e {:
 			:}
 	        ;
 
-decl        ::= sent: sen ids:e SEMI            {: RESULT = String.format("\t\tSystem.out.println(%s(%s));\n", sen, e); :}
+func_dec    ::= func_dec: rest decl: e          {: RESULT = String.format("%s\t\tSystem.out.println(%s);\n", rest, e); :}
+            |                                   {: RESULT = ""; :}
+            ;
+
+decl        ::= sent: sen ids:e                 {: RESULT = String.format("%s(%s)", sen, e); :}
+            | STRING_LITERAL:s                  {: RESULT = String.format("Integer.parseInt(\"%s\", 16)", s); :}  
             ;
 
 sent        ::= SENTENCE: sen                   {: RESULT = String.format("%s", sen); :}                 
