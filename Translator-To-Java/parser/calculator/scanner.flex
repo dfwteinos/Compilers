@@ -72,19 +72,27 @@ Sentence = [:jletter:] [:jletterdigit:]*
 %%
 /* ------------------------Lexical Rules Section---------------------- */
 
-/* sentences */
-{Sentence}        { return symbol(sym.SENTENCE, new String(yytext()));}
-
 <YYINITIAL> {
 /* operators */
  "+"            { return symbol(sym.PLUS);   }
  "("            { return symbol(sym.LPAREN); }
  ")"            { return symbol(sym.RPAREN); }
  ","            { return symbol(sym.COMMA);  }
+
+ "if"           { return symbol(sym.IF);     }
+ "else"         { return symbol(sym.ELSE);   }
+
+"prefix"        { return symbol(sym.PREFIX); }
+"suffix"        { return symbol(sym.SUFFIX); }
+
  "{"            { return symbol(sym.BEGIN);  }
  "}"            { return symbol(sym.END);    }
  \"             { return symbol(sym.STRING_LITERAL, new String(yytext())); }
  {WhiteSpace}   { /* just skip what was found, do nothing */ } 
+
+/* sentences */
+{Sentence}        { return symbol(sym.SENTENCE, new String(yytext()));}
+
 }
 
 <STRING> {
