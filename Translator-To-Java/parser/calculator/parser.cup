@@ -1,4 +1,4 @@
-/* Simple +/-/* expression language; parser evaluates constant expressions on the fly*/
+/* Simple MiniJava language; parser evaluates simple and/or complicated function declarations/calls */
 /**
  *  Package and Import Specifications
  */
@@ -21,46 +21,100 @@ scan with {: return s.next_token(); :};
  */
 
 /* Terminals (tokens returned by the scanner). */
-terminal            PLUS, LPAREN, RPAREN, SEMI, COMMA, BEGIN, END;
-terminal Integer    NUMBER;        // our scanner provides numbers as integers
-terminal String     STRING_LITERAL, SENTENCE, IDENT;
+terminal            PLUS, LPAREN, RPAREN, COMMA, BEGIN, END;
+terminal String     STRING_LITERAL, SENTENCE;
 
 /*  Non terminals */
-non terminal           program;
-non terminal String    func_dec, decl, sent, ids, args, more;      // used to store evaluated subexpressions
+non terminal            program;
+// Non terminals for function declarations
+non terminal String     func_decl, function, frame, body_func, concat, plus_sign;
+// Non terminals for function calls
+non terminal String     func_call, struct_call, params, args;
+// Non terminals for general utility 
+non terminal String     sent, id, more;
+
+/**
+ *  Precedence Declarations
+ */
+
+precedence left LPAREN, RPAREN;
+precedence left SENTENCE;
+precedence left STRING_LITERAL;
+// precedence left SENTENCE
 
 /**
  *  The Grammar Rules
  */
 
-program ::= func_dec:e {:
-			System.out.println("\n\nimport java.lang.Math;\n");
-			System.out.println("public class Main {");
-			System.out.println("\tpublic static void main(String[] args) {");
-			System.out.printf("%s", e);
-			System.out.println("\t}");
-			System.out.println("}");
-			:}
-	        ;
+program ::= func_decl: decl	{:  System.out.println("\n}");
+                            :}
+        ;
 
-func_dec    ::= func_dec: rest decl: e          {: RESULT = String.format("%s\t\tSystem.out.println(%s);\n", rest, e); :}
-            |                                   {: RESULT = ""; :}
+
+                /* Multiple function calls */
+/* :-----------------------------------------------------:*/
+/* :           F U N C T I O N S   C A L L S             :*/
+/* :-----------------------------------------------------:*/
+
+func_call   ::= struct_call: rest func_call: e                          {: RESULT = rest + "\n" + e; :}
+            |                                                           {: RESULT = ""; :}
             ;
 
-decl        ::= sent: sen ids:e                 {: RESULT = String.format("%s(%s)", sen, e); :}
-            | STRING_LITERAL:s                  {: RESULT = String.format("Integer.parseInt(\"%s\", 16)", s); :}  
+struct_call ::= sent: fname LPAREN params: identifiers RPAREN         {: RESULT = String.format("\t\tSystem.out.println(%s(%s));", fname, identifiers); :}
+            |   sent: fname LPAREN RPAREN                             {: RESULT = String.format("\t\tSystem.out.println(%s());", fname); :}
             ;
 
-sent        ::= SENTENCE: sen                   {: RESULT = String.format("%s", sen); :}                 
-            |                                   {: RESULT = ""; :}
+params      ::= STRING_LITERAL: s sent: sen STRING_LITERAL: e args: fin         {: RESULT = String.format("\"%s\"%s", sen, fin); :} 
+            | STRING_LITERAL: onarg STRING_LITERAL: e args: fin                 {: RESULT = String.format("\" \"%s", fin); :} 
+            | frame: fun args: fin                                              {: RESULT = String.format("%s%s", fun, fin); :} 
             ;
 
-ids         ::= LPAREN args: fin_arg            {: RESULT = String.format("%s", fin_arg); :}                 
+args        ::= COMMA params: arg                                               {: RESULT = String.format(", %s", arg); :}                        
+            |                                                                   {: RESULT = String.format(""); :}
             ;
 
-args        ::= sent: sen more: e               {: RESULT = String.format("%s%s", sen, e); :}                 
+
+/* Multiple function declarations */
+func_decl   ::= function: res func_decl: e              {: System.out.printf("%s", res);
+                                                        :} 
+
+            | func_call: calls                          {: System.out.println("\n\nimport java.lang.Math;\n");
+			                                            System.out.println("public class Main {");
+			                                            System.out.println("\tpublic static void main(String[] args) {");
+
+                                                        /* Function calls goes here */
+                                                        System.out.printf("%s", calls);
+                                                        System.out.println("\t}");
+                                                        :}
             ;
 
-more        ::= COMMA args: arg                 {: RESULT = String.format(",%s", arg); :}                        
-            | RPAREN: rpar                      {: RESULT = String.format(""); :}    
+/* Single function declarations */
+function    ::= frame: decl BEGIN body_func: body END   {: RESULT = String.format("\n\tpublic static String %s {\n\t\t return %s;\n\t}\n", decl, body ); :}
+            ;
+
+body_func   ::= concat: e                                           {: RESULT = String.format("%s", e); :} 
+            | STRING_LITERAL: s sent: sen STRING_LITERAL: e         {: RESULT = String.format("\"%s\"", sen); :} 
+            ;
+
+concat      ::= sent: sen plus_sign: e                  {: RESULT = String.format("%s%s", sen, e); :}                 
+            ;
+
+plus_sign   ::= PLUS concat: fin_var                    {: RESULT = String.format(" + %s", fin_var); :}                 
+            |                                           {: RESULT = ""; :}
+            ;
+
+/* Main function frame with identifiers => name(), surname(Okay) | FUNCTION DECLARATIONS */
+
+frame       ::= sent: sen LPAREN id:e RPAREN        {: RESULT = String.format("%s(%s)", sen, e); :}
+            | sent: sen LPAREN RPAREN               {: RESULT = String.format("%s()", sen); :}
+            ;
+
+sent        ::= SENTENCE: sen                       {: RESULT = String.format("%s", sen); :}                 
+            ;
+
+id          ::= sent: sen more: e                   {: RESULT = String.format("String %s%s", sen, e); :}                 
+            ;
+
+more        ::= COMMA id: arg                       {: RESULT = String.format(", %s", arg); :}                        
+            |                                       {: RESULT = String.format(""); :}
             ;

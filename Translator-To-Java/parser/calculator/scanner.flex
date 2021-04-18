@@ -67,32 +67,24 @@ dec_int_lit = 0 | [1-9][0-9]*
 /* Sentences for function names */
 Sentence = [:jletter:] [:jletterdigit:]*
 
-/* identifiers for function arguments */
-identifier =  [:jletter:]*
-
 %state STRING
 
 %%
 /* ------------------------Lexical Rules Section---------------------- */
 
 /* sentences */
-{Sentence}      { return symbol(sym.SENTENCE, new String(yytext()));}
-
-/* identifiers */
-{identifier}    { return symbol(sym.IDENT, new String(yytext()));}
+{Sentence}        { return symbol(sym.SENTENCE, new String(yytext()));}
 
 <YYINITIAL> {
 /* operators */
  "+"            { return symbol(sym.PLUS);   }
  "("            { return symbol(sym.LPAREN); }
  ")"            { return symbol(sym.RPAREN); }
- ";"            { return symbol(sym.SEMI);   }
  ","            { return symbol(sym.COMMA);  }
  "{"            { return symbol(sym.BEGIN);  }
  "}"            { return symbol(sym.END);    }
- {dec_int_lit}  { return symbol(sym.NUMBER, new Integer(yytext())); }
- \"             { stringBuffer.setLength(0); yybegin(STRING); }
- {WhiteSpace}   { /* just skip what was found, do nothing */ }
+ \"             { return symbol(sym.STRING_LITERAL, new String(yytext())); }
+ {WhiteSpace}   { /* just skip what was found, do nothing */ } 
 }
 
 <STRING> {
