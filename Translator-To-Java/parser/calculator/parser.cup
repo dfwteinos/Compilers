@@ -35,7 +35,7 @@ non terminal String     func_call, struct_call, params, args;
 // Non terminals for general utility 
 non terminal String     sent, id, more;
 // Non terminals for if-else expressions
-non terminal String     if_else_expr, conditions, suf_pre, inner_cond, inner_func;
+non terminal String     if_else_expr, conditions, suf_pre, inner_cond, inner_func, mult_string, conc_sign;
 
 /**
  *  Precedence Declarations
@@ -101,19 +101,22 @@ func_decl   ::= function: res func_decl: e              {: System.out.printf("%s
 /* :-----------------------------------------------------:*/
 
 /* Single function declarations */
-function    ::= frame: decl BEGIN body_func: body END   {: RESULT = String.format("\n\tpublic static String %s {\n\t\t return %s;\n\t}\n", decl, body ); :}
+function    ::= frame: decl BEGIN body_func: body END               {: RESULT = String.format("\n\tpublic static String %s {\n\t\t return %s;\n\t}\n", decl, body ); :}
             ;
 
 body_func   ::= concat: e                                           {: RESULT = String.format("%s", e); :} 
             | STRING_LITERAL: s sent: sen STRING_LITERAL: e         {: RESULT = String.format("\"%s\"", sen); :} 
-            | if_else_expr: if_else                                 {: RESULT = String.format("%s", if_else); :}
             ;
 
-concat      ::= sent: sen plus_sign: e                  {: RESULT = String.format("%s%s", sen, e); :}                 
+concat      ::= sent: sen plus_sign: e                                                  {: RESULT = String.format("%s%s", sen, e); :}                 
+            | STRING_LITERAL: s mult_string: sen STRING_LITERAL: e plus_sign: fin       {: RESULT = String.format("\"%s\"%s", sen,fin); :}
+            | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL: e plus_sign: fin          {: RESULT = String.format("\"%s\"%s", sen,fin); :}
+            | inner_func: inf plus_sign: e                                              {: RESULT = String.format("%s%s", inf, e); :}                 
+            | if_else_expr: if_else                                                     {: RESULT = String.format("%s", if_else); :}
             ;
 
-plus_sign   ::= PLUS concat: fin_var                    {: RESULT = String.format(" + %s", fin_var); :}                 
-            |                                           {: RESULT = ""; :}
+plus_sign   ::= PLUS concat: fin_var                                {: RESULT = ".concat(" + fin_var + ")";:}                
+            |                                                       {: RESULT = ""; :}
             ;
 
 /* Main function frame with identifiers => name(), surname(Okay) | FUNCTION DECLARATIONS */
@@ -140,11 +143,17 @@ more        ::= COMMA id: arg                       {: RESULT = String.format(",
 if_else_expr    ::= IF LPAREN conditions: cond1 RPAREN conditions: cond2 ELSE conditions: cond3     {:RESULT = "(" + cond1 + ") ? " + cond2 + " : " + cond3; :} 
                 ;
 
-conditions::= SENTENCE: sen                                             {: RESULT = sen; :}       
-            | inner_cond: sen1 suf_pre: expr inner_cond: sen2           {: RESULT = sen2 + expr + "(" + sen1 + ")"; :}
-            | inner_func: inf                                           {: RESULT = inf; :}
-            | if_else_expr: if_else                                     {: RESULT = if_else; :}
+conditions::= SENTENCE: sen conc_sign: sente                                        {: RESULT = sen + sente;                        :}       
+            | inner_cond: sen1 suf_pre: expr inner_cond: sen2 conc_sign: sen3       {: RESULT = sen2 + expr + "(" + sen1 + ")" + sen3;     :}
+            | inner_func: inf conc_sign: innFunc                                    {: RESULT = inf + innFunc;                                :}
+            | STRING_LITERAL: s mult_string: sen STRING_LITERAL conc_sign: e        {: RESULT = String.format("\"%s\"%s", sen, e);  :}
+            | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL conc_sign: e           {: RESULT = String.format("\"%s\"%s", sen, e);  :}
+            | if_else_expr: if_else                                                 {: RESULT = if_else;                            :}
             ;   
+
+conc_sign   ::= PLUS conditions: fin_var                                {: RESULT = ".concat(" + fin_var + ")";:}                
+            |                                                           {: RESULT = ""; :}
+            ;
 
 inner_func  ::= SENTENCE: fname LPAREN inner_cond: identifiers RPAREN   {: RESULT = fname + "(" + identifiers + ")"; :}
             |   SENTENCE: fname LPAREN inner_func: identifiers RPAREN   {: RESULT = fname + "(" + identifiers + ")"; :}
@@ -155,6 +164,10 @@ inner_cond  ::= SENTENCE: sen                                           {: RESUL
             | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL: e         {: RESULT = String.format("\"%s\"", sen); :} 
             ;
 
-suf_pre     ::= PREFIX: pre                             {: RESULT = ".startsWith";  :}
-            |   SUFFIX: suf                             {: RESULT = ".endsWith";    :}
+mult_string ::= sent: sen mult_string: e                        {: RESULT = String.format("%s %s", sen, e); :}
+            |                                                   {: RESULT = "\b"; :}
+            ;
+
+suf_pre     ::= PREFIX: pre                                     {: RESULT = ".startsWith";  :}
+            |   SUFFIX: suf                                     {: RESULT = ".endsWith";    :}
             ;
