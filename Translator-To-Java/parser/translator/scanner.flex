@@ -78,6 +78,7 @@ Sentence = [:jletter:] [:jletterdigit:]*
  "("            { return symbol(sym.LPAREN); }
  ")"            { return symbol(sym.RPAREN); }
  ","            { return symbol(sym.COMMA);  }
+ "."            { return symbol(sym.POINT);  }
 
  "if"           { return symbol(sym.IF);     }
  "else"         { return symbol(sym.ELSE);   }
