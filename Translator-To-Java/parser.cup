@@ -152,7 +152,7 @@ if_else_expr    ::= IF LPAREN conditions: cond1 RPAREN conditions: cond2 ELSE co
 
 conditions::= SENTENCE: sen conc_sign: sente                                        {: RESULT = sen + sente;        :}       
             | inner_cond: sen suf_pre: expr                                         {: RESULT = expr + sen + ")";   :}
-            | inner_func: inf conc_sign: innFunc                                    {: RESULT = inf + innFunc;                                :}
+            | inner_func: inf conc_sign: innFunc                                    {: RESULT = inf + innFunc;      :}
             | STRING_LITERAL: s mult_string: sen STRING_LITERAL conc_sign: e        {: RESULT = String.format("\"%s\"%s", sen, e);  :}
             | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL conc_sign: e           {: RESULT = String.format("\"%s\"%s", sen, e);  :}
             | if_else_expr: if_else                                                 {: RESULT = if_else;            :}
@@ -166,8 +166,8 @@ inner_func  ::= SENTENCE: fname LPAREN inner_par: identifiers RPAREN            
             |   SENTENCE: fname LPAREN RPAREN                                       {: RESULT = fname + "()"; :}
             ;
 
-inner_par   ::= STRING_LITERAL: s sent: sen STRING_LITERAL: e in_args: fin      {: RESULT = String.format("\"%s\"%s", sen, fin); :} 
-            |   STRING_LITERAL: onarg STRING_LITERAL: e in_args: fin            {: RESULT = String.format("\" \"%s", fin); :} 
+inner_par   ::= STRING_LITERAL: s sent: sen STRING_LITERAL: e in_args: fin          {: RESULT = String.format("\"%s\"%s", sen, fin); :} 
+            |   STRING_LITERAL: onarg STRING_LITERAL: e in_args: fin                {: RESULT = String.format("\" \"%s", fin); :} 
             
             |   STRING_LITERAL: s mult_string: sen STRING_LITERAL: e in_args: fin               
                 {: RESULT = String.format("\"%s\"%s", sen, fin);  :}
@@ -178,8 +178,8 @@ inner_par   ::= STRING_LITERAL: s sent: sen STRING_LITERAL: e in_args: fin      
             |   PLUS STRING_LITERAL: s mult_string: sen STRING_LITERAL: e in_args: fin  
                 {: RESULT = ".concat(\"" + sen + "\")" + fin; :}
 
-            |   sent: fname LPAREN inner_par: identifiers RPAREN in_args: fin           {: RESULT = String.format("%s(%s) %s", fname, identifiers, fin); :}
-            |   sent: fname LPAREN RPAREN in_args: fin                                  {: RESULT = String.format("%s() %s", fname, fin); :}
+            |   sent: fname LPAREN inner_par: identifiers RPAREN in_args: fin           {: RESULT = String.format("%s(%s)%s", fname, identifiers, fin); :}
+            |   sent: fname LPAREN RPAREN in_args: fin                                  {: RESULT = String.format("%s()%s", fname, fin); :}
             |   sent: sen in_args: fin                                                  {: RESULT = String.format("%s%s",sen, fin); :}
             ;
 
