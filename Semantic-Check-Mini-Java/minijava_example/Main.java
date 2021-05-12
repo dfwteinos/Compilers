@@ -102,9 +102,10 @@ class MyVisitor extends GJDepthFirst<String, Void>{
                 if(deepTable!=null){
 
                     Set <String> keyz = deepTable.nextScope.lhm.keySet();
-                    for (String kie: keyz) {
-                        System.out.println(kie + "--" + deepTable.nextScope.lhm.get(kie));
-                    }    
+                    System.out.println(keyz);
+                    // for (String kie: keyz) {
+                        // System.out.println(kie + "--" + deepTable.nextScope.lhm.get(kie));
+                    // }    
                 }
             }
     }
@@ -211,19 +212,31 @@ class MyVisitor extends GJDepthFirst<String, Void>{
      */
     @Override
     public String visit(MethodDeclaration n, Void argu) throws Exception {
+        
+        //Arg list of function -> method( ..arglist.. )
         String argumentList = n.f4.present() ? n.f4.accept(this, null) : "";
+        
+        //Identifier of the expression
+        String expr   = n.f10.accept(this, null);
+        System.out.println(expr);
 
+        //Type and Name of Function
         String myType = n.f1.accept(this, null);
         String myName = n.f2.accept(this, null);
 
+        //Insert Method in the SymbolTable of current class
         hMap.insertSymbol(curClass, myName, myType);
         updateFunction(myName);
 
+        //Insert arguments of the method in the method -> ST(...)
         insertMethodVariables(argumentList, myName);
 
         System.out.println(myType + " " + myName + " -- " + argumentList);
         
         super.visit(n, argu);
+
+        //Check if the returning type is the same as the type of function
+        hMap.methodReturnTypeCheck(myName, expr);
 
         return null;
     }
@@ -296,6 +309,25 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         return null;
     }
 
+
+    /**
+    * f0 -> AndExpression()
+    *       | CompareExpression()
+    *       | PlusExpression()
+    *       | MinusExpression()
+    *       | TimesExpression()
+    *       | ArrayLookup()
+    *       | ArrayLength()
+    *       | MessageSend()
+    *       | Clause()
+    */
+    @Override
+    public String visit(Expression n, Void argu) throws Exception {
+        String expr = n.f0.accept(this, argu);
+        return expr;
+    }
+
+
     @Override
     public String visit(ArrayType n, Void argu) {
         return "int[]";
@@ -314,7 +346,7 @@ class MyVisitor extends GJDepthFirst<String, Void>{
         return n.f0.toString();
     }
 
-    public void insertMethodVariables(String arg_list, String fName) {
+    public void insertMethodVariables(String arg_list, String fName) throws Exception {
 
         //If we have one or more arguments for a method
         //Put them into the symbol table of function's scope
