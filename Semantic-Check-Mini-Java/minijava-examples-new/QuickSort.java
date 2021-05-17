@@ -11,7 +11,7 @@ class QuickSort{
 class QS{
     
     int[] number ;
-    int size ;
+	int size ;
 
     // Invoke the Initialization, Sort and Printing
     // Methods

@@ -35,9 +35,13 @@ public class Main {
             
             //Print the first scope of classes
             // evalF.printClassNames();
-            
+
             //Get the symbolTable which we fill'd up in the first visit
             classTable symbolTable = evalF.getClassTable();
+
+            // SymbolTable st= symbolTable.lhm.get("QS");
+            // STPtr var = st.lhm.get("number");
+            // System.out.println("number type is: " + var.type);
 
             //Initialize the second visitor
             SecondVisitor evalS = new SecondVisitor(symbolTable);

@@ -102,10 +102,36 @@ public class classTable {
        }
     }
 
-    public void methodReturnTypeCheck(String fName, String exprType) throws Exception{
+    public void methodReturnTypeCheck(String className, String fName, String exprType) throws Exception{
 
-        curTable.methodReturnTypeCheck(fName, exprType);
+        SymbolTable curFunction = lhm.get(className);
+        curFunction.methodReturnTypeCheck(fName, exprType);
     }
+
+    public String variableType(String className, String curFunc, String var) {
+        
+        String type = null;
+        SymbolTable class_Table = lhm.get(className);
+        //Check if it's a variable of inner class (field)
+        if(class_Table.lhm.containsKey(var)){
+            type = class_Table.variableType(var);
+        }
+
+        // else{
+            //If not, check if it's a variable of inner function of this class
+            // STPtr funcTable = class_Table.lhm.get(curFunc);
+            // type = funcTable.nextScope.variableType(var);
+        // }
+
+        return type;
+    }
+
+    public int methodNumArgs(String className, String fName) {
+        SymbolTable curFunction = lhm.get(className);
+        int num_Args = curFunction.methodReturnNumArgs(fName);
+        return num_Args;
+    }
+
 
     //Compare the arguments of 2 identical function in case of overloading
     public void checkFuncArgs(STPtr func1, STPtr func2, int argLen, String fName) throws Exception{
@@ -152,11 +178,54 @@ public class classTable {
 
     }
 
+    //Compare the arguments of 2 function call and function method
+    public void checkFuncArgs(STPtr func1, String callArgs, int argLen, String fName) throws Exception{
+
+        System.out.println("mpainei mesa2" + argLen);
+
+        String type1;
+        String type2;
+
+        Set <String> keys1 = func1.nextScope.lhm.keySet();
+        List<String> listKeys1 = new ArrayList<String>(keys1);
+
+        String [] callArgsArray = callArgs.split(",");
+
+        for(int i = 0; i < argLen; i++){
+
+            type1 = func1.nextScope.lhm.get(listKeys1.get(i)).type; 
+            type2 = callArgsArray[i]; 
+
+            // if(type2.equals("this")){
+                // type2 = className;
+            // }
+
+            if( !(type1.equals(type2)) ){
+
+                String superC = fetchSuperClassName(type2);
+                if(superC != null){
+
+                    if(!(type1.equals(superC))){
+                        throw new Exception("In function: [" + fName +"],  Arg number " + (i + 1)+ " can't be " + type1 + " and " + type2 + " at the same time.");
+                    }
+                    else
+                        return;
+                }
+                throw new Exception("In function: [" + fName +"],  Arg number " + (i + 1)+ " can't be " + type1 + " and " + type2 + " at the same time.");
+            }
+        }
+    }
+
     //If we have Class "X" extends "Y", get [Y] name back
     public String fetchSuperClassName(String dClass){
         
-        SymbolTable itsClass = lhm.get(dClass);
-        String superC = itsClass.superC;
+        String superC = null;
+
+        if(lhm.containsKey(dClass)){
+            SymbolTable itsClass = lhm.get(dClass);
+            superC = itsClass.superC;
+        }
+
         return superC;
     }
 }
@@ -209,12 +278,12 @@ class STPtr {
     }
 
     //Fetch a super-class function, go up as many level as it gets.
-    public void fetchSuperFunction(String superC, String func, classTable cTable) {
+    public void fetchSuperFunction(String superC, String func, classTable cTable) throws Exception {
 
         // System.out.println("superclass is: " + superC);
 
         if(superC == null) {
-            return;
+            throw new Exception("Variable/method: " + func + " does not exist at any SuperClass");
         }
 
         SymbolTable classT = cTable.lhm.get(superC);
@@ -274,16 +343,31 @@ class SymbolTable {
         String fType = curPtr.type;
         System.out.println(fType);
 
-        //Get the STPtr of current expression
-        // STPtr exprCell = curPtr.nextScope.lhm.get(expr);
-
-        //Get the type of the expression
-        // String exprType = exprCell.type;
-
         //Check if we have type equality between function and returning type
         if(fType != exprType) {
             throw new Error("Type of method [" + fName + "] is: " + fType + " while returning type is: " + exprType);
         }
+    }
+
+    public String variableType(String var) {
+        //Get the STPtr of current variable
+        STPtr curPtr = lhm.get(var);
+
+        //Get the type of variable
+        String varType = curPtr.type;
+
+        return varType;
+    }
+
+    public int methodReturnNumArgs(String fName) {
+        
+        //Get the STPtr of current function
+        STPtr curPtr = lhm.get(fName);
+
+        //Get the number of arguments of the function
+        int numArgs = curPtr.numArgs;
+
+        return numArgs;
     }
 
 }

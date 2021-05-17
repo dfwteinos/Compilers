@@ -326,8 +326,6 @@ class Tree{
 
 }
 
-  
-
 class Visitor {
     Tree l ;
     Tree r ;

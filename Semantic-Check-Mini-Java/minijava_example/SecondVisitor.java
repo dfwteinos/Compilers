@@ -126,8 +126,12 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
         // hMap.insert(classname);
         updateCurrentData(classname, null);
+        SymbolTable cl = hMap.lhm.get(classname);
+        System.out.println(cl.lhm.keySet());
 
         super.visit(n, argu);
+
+
 
         // System.out.println();
 
@@ -205,7 +209,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         //Check for return type between function and returning variable
         String expr = n.f10.accept(this, null);
         System.out.println("In methoddecl, expr is: " + expr);
-        hMap.methodReturnTypeCheck(myName, expr);
+        hMap.methodReturnTypeCheck(curClass, myName, expr);
         
         super.visit(n, argu);
 
@@ -265,20 +269,20 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     * f1 -> Identifier()
     * f2 -> ";"
     */
-    @Override
-    public String visit(VarDeclaration n, Void argu) throws Exception {
+    // @Override
+    // public String visit(VarDeclaration n, Void argu) throws Exception {
         
-        String type = n.f0.accept(this, null);
-        String name = n.f1.accept(this, null);
+    //     String type = n.f0.accept(this, null);
+    //     String name = n.f1.accept(this, null);
 
-        System.out.println(type + " " + name);
-        // if(curFunc!=null)
-            // hMap.insertMethodVariables(curFunc, name, type);
-        // else 
-            // hMap.insertSymbol(curClass, name, type, -1);
+    //     System.out.println(type + " " + name);
+    //     // if(curFunc!=null)
+    //         // hMap.insertMethodVariables(curFunc, name, type);
+    //     // else 
+    //         // hMap.insertSymbol(curClass, name, type, -1);
 
-        return null;
-    }
+    //     return null;
+    // }
 
 
 
@@ -337,6 +341,93 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     //     return clause;
     // }
 
+    /**
+    * f0 -> Identifier()
+    * f1 -> "="
+    * f2 -> Expression()
+    * f3 -> ";"
+    */
+    @Override
+    public String visit(AssignmentStatement n, Void argu) throws Exception {
+        
+        String id = n.f0.accept(this, argu);
+
+
+        System.out.println("In AssignmentStatement, var is : "+ id);
+        String idType = hMap.variableType(curClass, curFunc, id);
+        if(idType == null) {
+            idType = retrieveMethodVariableType(curClass, curFunc, id);
+        }
+        System.out.println("Type of variable is: "+ idType);
+        String exprType = n.f2.accept(this, argu);
+        System.out.println("Type of expr is: " + exprType);
+
+        if(exprType.equals("this")){
+            exprType = curClass;
+        }
+
+        if(!(idType.equals(exprType))){
+            throw new Exception("Var: [" + id + "] is: "+ idType + " , and it's assigned as " + exprType + ".");
+        }
+
+        return null;
+    }
+
+
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "<"
+    * f2 -> PrimaryExpression()
+    */
+    @Override
+    public String visit(CompareExpression n, Void argu) throws Exception {
+        
+        String type1 = n.f0.accept(this, argu);
+        String type2 = n.f2.accept(this, argu);
+
+        if( !(type1.equals("int")) || !(type2.equals("int")) ){
+
+            throw new Exception("Can't multiply: [" + type1 + "] with [" + type2 + "].");
+        }
+        return "int";
+    }
+
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "+"
+    * f2 -> PrimaryExpression()
+    */
+    @Override
+    public String visit(PlusExpression n, Void argu) throws Exception {
+
+        String type1 = n.f0.accept(this, argu);
+        String type2 = n.f2.accept(this, argu);
+
+        if( !(type1.equals("int")) || !(type2.equals("int")) ){
+
+            throw new Exception("Can't multiply: [" + type1 + "] with [" + type2 + "].");
+        }
+
+        return "int";
+    }
+
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "-"
+    * f2 -> PrimaryExpression()
+    */
+    @Override
+    public String visit(MinusExpression n, Void argu) throws Exception {
+        String type1 = n.f0.accept(this, argu);
+        String type2 = n.f2.accept(this, argu);
+
+        if( !(type1.equals("int")) || !(type2.equals("int")) ){
+
+            throw new Exception("Can't multiply: [" + type1 + "] with [" + type2 + "].");
+        }
+
+        return "int";
+    }
 
 
     /**
@@ -355,7 +446,30 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
             throw new Exception("Can't multiply: [" + type1 + "] with [" + type2 + "].");
         }
 
-        return null;
+        return "int";
+    }
+
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "["
+    * f2 -> PrimaryExpression()
+    * f3 -> "]"
+    */
+    @Override
+    public String visit(ArrayLookup n, Void argu) throws Exception {
+
+        String typeOfArray = n.f0.accept(this, argu);
+        if (!(typeOfArray.equals("int[]"))){
+            throw new Exception("Can't handle simple int variable as array of int");
+        }
+
+        String typeOfLookupVar = n.f2.accept(this, argu);
+        if( !(typeOfLookupVar.equals("int"))){
+
+            throw new Exception("Lookup Variables must be int -> e.g: int x[int y]");
+        }
+
+        return typeOfLookupVar;
     }
 
     /**
@@ -372,11 +486,40 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         String type = "";
         String expr = n.f0.accept(this, argu);
         String id = n.f2.accept(this, argu);
+        int callArgLength;
 
         if(expr.equals("this")){
 
+            //Retrieve the type of current method
             type = retrieveMethodType(curClass, id);
+            //Retrieve the types of arguments of current method
+            String argList = n.f4.accept(this, argu);
+            
+            //Compute the length of arguments in the call of method
+            if(argList!=null){
+                callArgLength = StringDelimiterLength(argList, ",");
+            }
+            else {
+                callArgLength = 0;
+            }
+
             System.out.println("TYPE IN MESSAGE SEND IS: " + type);
+            System.out.println("expression list is: " + n.f4.accept(this, argu));
+
+            //Retrieve the length of arguments in the declare of the function
+            int methodArgLength = hMap.methodNumArgs(curClass, id);
+
+            //If the #CallArgs != #DeclareArgs have different length, throw an Exception 
+            if(callArgLength!=methodArgLength) {
+                throw new Exception("Method: [" + id + "], has "+ methodArgLength + " args, but in function: [" + curFunc + "], it's called with " + callArgLength + " parameters.");
+            }
+
+            //Check for the order of types in fCall and fDeclare
+            STPtr funcPtr = retrieveMethodSTPtr(curClass, id);
+            if(callArgLength>0){
+                hMap.checkFuncArgs(funcPtr, argList, callArgLength, id);
+            }
+
         }
 
         else {
@@ -386,6 +529,45 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return type;
     }
 
+    /**
+    * f0 -> Expression()
+    * f1 -> ExpressionTail()
+    */
+    @Override
+    public String visit(ExpressionList n, Void argu) throws Exception {
+        
+        String rest = n.f0.accept(this, null);
+        if(n.f1 != null){
+            rest += n.f1.accept(this, null);
+        }
+
+        return rest;
+    }
+
+    /**
+    * f0 -> ( ExpressionTerm() )*
+    */
+    @Override
+    public String visit(ExpressionTail n, Void argu) throws Exception {
+  
+        String t = "";
+
+        for(Node node: n.f0.nodes){
+            t += "," + node.accept(this, null);
+        }
+
+        return t;
+    }
+
+    /**
+    * f0 -> ","
+    * f1 -> Expression()
+    */
+    @Override
+    public String visit(ExpressionTerm n, Void argu) throws Exception {
+        
+        return n.f1.accept(this, null);
+    }
 
     /**
     * f0 -> IntegerLiteral()
@@ -409,7 +591,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         }
 
         //We have an Identifier of smthing more complicated
-        else if(!prExpr.equals("int") && !prExpr.equals("boolean") && !prExpr.equals("this")) {
+        else if(!prExpr.equals("int") && !prExpr.equals("boolean") && !prExpr.equals("this") && !prExpr.equals("int[]")) {
 
             //If we have AllocationExpression case
             //Return the name of the class itself
@@ -418,7 +600,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
             }
 
             else {
-                System.out.println("Cur function is: " + curFunc);
+                System.out.println("Cur function is: " + curFunc + " and curClass is: " + curClass);
                 String type = retrieveMethodVariableType(curClass, curFunc, prExpr);
                 return type;
             }
@@ -469,6 +651,24 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return "this";
     }
 
+    /**
+    * f0 -> "new"
+    * f1 -> "int"
+    * f2 -> "["
+    * f3 -> Expression()
+    * f4 -> "]"
+    */
+    @Override
+    public String visit(ArrayAllocationExpression n, Void argu) throws Exception {
+        
+        String type = n.f3.accept(this, argu);
+        if(!(type.equals("int"))){
+            throw new Exception("Can't allocate array with type of: " + type);
+        }
+
+        return "int[]";
+    }
+
 
     /**
     * f0 -> "new"
@@ -505,19 +705,83 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return type;
     }
 
-    public String retrieveMethodVariableType(String currentClass, String method, String var) {
+    public STPtr retrieveMethodSTPtr(String curClass, String id) {
 
+        //Retrieve the symbol table of this class
+        SymbolTable TableClass  = hMap.lhm.get(curClass);
+                    
+        //Retrieve the cell of variable/method
+        STPtr fieldCell = TableClass.lhm.get(id);
+        
+        return fieldCell;
+    }
+
+    public String retrieveMethodVariableType(String currentClass, String method, String var) throws Exception {
+
+        String type = null;
+        
         //Retrieve the symbol table of this class
         SymbolTable TableClass  = hMap.lhm.get(currentClass);
             
         //Retrieve the cell of variable/method
         STPtr fieldCell = TableClass.lhm.get(method);
      
+        System.out.println("test1");
+        System.out.println(fieldCell.nextScope);
         //Retrieve the symbol table of this method 
-        STPtr varCell = fieldCell.nextScope.lhm.get(var);
+        //Check if this variable exists in function's symbol table
+        if(fieldCell.nextScope != null){
 
-        //Retrive the type of the specific variable
-        String type = varCell.type;
+            System.out.println("test2");
+            if(fieldCell.nextScope.lhm != null){
+
+            System.out.println("test3");
+
+                if(fieldCell.nextScope.lhm.containsKey(var)){
+
+                    STPtr varCell = fieldCell.nextScope.lhm.get(var);
+
+                    //Retrieve the type of the specific variable
+                    type = varCell.type;
+                    return type;
+
+                }
+
+            }
+
+        }
+
+        //If this variable does not exists in method's symbol table
+        //Check if it's a class variable (field)
+        System.out.println("test5");
+        System.out.println(TableClass.lhm.keySet());
+
+
+        if(TableClass.lhm.containsKey(var)){
+
+            fieldCell = TableClass.lhm.get(var);
+            type = fieldCell.type;
+            return type;
+        }
+
+        //Last case, if the variable does not exist in the class variables
+        //Check if it has a super-class
+        //And if it is, check the variables
+        String superC = hMap.fetchSuperClassName(currentClass);
+        if(superC!=null){
+            
+            STPtr sVar = new STPtr(-1);
+            sVar.fetchSuperFunction(superC, var, hMap);
+            type = sVar.type;
+        }
+
+
+        System.out.println("test4");
+        System.out.println("epitelous, type is: "+ type);
+
+        if(type == null){
+            throw new Exception("In class: [" + currentClass + "] and at method: [" + method + "], variable: [" + var + "] is undeclared.");
+        }
 
         return type;
     }

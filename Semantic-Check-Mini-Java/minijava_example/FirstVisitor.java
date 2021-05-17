@@ -126,6 +126,9 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
 
         super.visit(n, argu);
 
+        SymbolTable cl = hMap.lhm.get(classname);
+        System.out.println(cl.lhm.keySet());
+
         System.out.println();
 
         return null;
@@ -294,6 +297,16 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
     //     return expr;
     // }
 
+    /**
+    * f0 -> ArrayType()
+    *       | BooleanType()
+    *       | IntegerType()
+    *       | Identifier()
+    */
+    @Override
+    public String visit(Type n, Void argu) throws Exception {
+        return n.f0.accept(this, argu);
+    }
 
     @Override
     public String visit(ArrayType n, Void argu) {
