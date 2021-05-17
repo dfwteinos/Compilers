@@ -127,7 +127,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         // hMap.insert(classname);
         updateCurrentData(classname, null);
         SymbolTable cl = hMap.lhm.get(classname);
-        System.out.println(cl.lhm.keySet());
+        // System.out.println(cl.lhm.keySet());
 
         super.visit(n, argu);
 
@@ -208,7 +208,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         
         //Check for return type between function and returning variable
         String expr = n.f10.accept(this, null);
-        System.out.println("In methoddecl, expr is: " + expr);
+        System.out.println("In methoddecl,return expr is: " + expr);
         hMap.methodReturnTypeCheck(curClass, myName, expr);
         
         super.visit(n, argu);
@@ -298,7 +298,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(PrintStatement n, Void argu) throws Exception {
 
         String expr = n.f2.accept(this, argu);
-        System.out.println("exw xusei" + expr);
+        System.out.println("In print, expr is: " + expr);
 
         //TODO When I'll cover all possible outcomes for expression(!).
         if(!(expr.equals("int"))){
@@ -325,7 +325,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(Expression n, Void argu) throws Exception {
 
         String expr = n.f0.accept(this, argu);
-        System.out.println("expr is: " + expr);
+        System.out.println("Expression is: " + expr);
         
         return expr;
     }
@@ -487,43 +487,54 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         String expr = n.f0.accept(this, argu);
         String id = n.f2.accept(this, argu);
         int callArgLength;
+        String [] argListArray = null;
+        String currentClass = null;
 
         if(expr.equals("this")){
-
-            //Retrieve the type of current method
-            type = retrieveMethodType(curClass, id);
-            //Retrieve the types of arguments of current method
-            String argList = n.f4.accept(this, argu);
             
-            //Compute the length of arguments in the call of method
-            if(argList!=null){
-                callArgLength = StringDelimiterLength(argList, ",");
-            }
-            else {
-                callArgLength = 0;
-            }
-
-            System.out.println("TYPE IN MESSAGE SEND IS: " + type);
-            System.out.println("expression list is: " + n.f4.accept(this, argu));
-
-            //Retrieve the length of arguments in the declare of the function
-            int methodArgLength = hMap.methodNumArgs(curClass, id);
-
-            //If the #CallArgs != #DeclareArgs have different length, throw an Exception 
-            if(callArgLength!=methodArgLength) {
-                throw new Exception("Method: [" + id + "], has "+ methodArgLength + " args, but in function: [" + curFunc + "], it's called with " + callArgLength + " parameters.");
-            }
-
-            //Check for the order of types in fCall and fDeclare
-            STPtr funcPtr = retrieveMethodSTPtr(curClass, id);
-            if(callArgLength>0){
-                hMap.checkFuncArgs(funcPtr, argList, callArgLength, id);
-            }
-
+            currentClass = curClass;
         }
 
         else {
-            type = retrieveMethodType(expr, id); 
+            currentClass = expr;
+        }
+
+        //Retrieve the type of current method
+        type = retrieveMethodType(currentClass, id);
+        //Retrieve the types of arguments of current method
+        String argList = n.f4.accept(this, argu);
+            
+        //Compute the length of arguments in the call of method
+        if(argList!=null){
+            callArgLength = StringDelimiterLength(argList, ",");
+                
+            argListArray = argList.split(",");
+            for(int i = 0; i < argListArray.length; i++){
+                if(argListArray[i].equals("this")){
+                    argListArray[i] = curClass;
+                }
+            }
+            
+        }
+        else {
+            callArgLength = 0;
+        }
+
+        System.out.println("TYPE IN MESSAGE SEND IS: " + type);
+        System.out.println("expression list is: " + n.f4.accept(this, argu));
+
+        //Retrieve the length of arguments in the declare of the function
+        int methodArgLength = hMap.methodNumArgs(currentClass, id);
+
+        //If the #CallArgs != #DeclareArgs have different length, throw an Exception 
+        if(callArgLength!=methodArgLength) {
+            throw new Exception("Method: [" + id + "], has "+ methodArgLength + " args, but in function: [" + curFunc + "], it's called with " + callArgLength + " parameters.");
+        }
+
+        //Check for the order of types in fCall and fDeclare
+        STPtr funcPtr = retrieveMethodSTPtr(currentClass, id);
+        if(callArgLength>0){
+            hMap.checkFuncArgs(funcPtr, argListArray, callArgLength, id);
         }
 
         return type;
@@ -718,6 +729,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
     public String retrieveMethodVariableType(String currentClass, String method, String var) throws Exception {
 
+        System.out.println("IN retrieveMethodVariableType");
         String type = null;
         
         //Retrieve the symbol table of this class
@@ -726,16 +738,16 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         //Retrieve the cell of variable/method
         STPtr fieldCell = TableClass.lhm.get(method);
      
-        System.out.println("test1");
+        // System.out.println("test1");
         System.out.println(fieldCell.nextScope);
         //Retrieve the symbol table of this method 
         //Check if this variable exists in function's symbol table
         if(fieldCell.nextScope != null){
 
-            System.out.println("test2");
+            // System.out.println("test2");
             if(fieldCell.nextScope.lhm != null){
 
-            System.out.println("test3");
+            // System.out.println("test3");
 
                 if(fieldCell.nextScope.lhm.containsKey(var)){
 
@@ -753,7 +765,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
         //If this variable does not exists in method's symbol table
         //Check if it's a class variable (field)
-        System.out.println("test5");
+        // System.out.println("test5");
         System.out.println(TableClass.lhm.keySet());
 
 
@@ -776,8 +788,8 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         }
 
 
-        System.out.println("test4");
-        System.out.println("epitelous, type is: "+ type);
+        // System.out.println("test4");
+        // System.out.println("epitelous, type is: "+ type);
 
         if(type == null){
             throw new Exception("In class: [" + currentClass + "] and at method: [" + method + "], variable: [" + var + "] is undeclared.");

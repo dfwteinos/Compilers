@@ -78,19 +78,20 @@ public class classTable {
 
     //Check for Overloading and also do some type check, if it exists
     public void checkFuncOverloading(String curClass, String fName, int argLen) throws Exception {
-    
+        
+        System.out.println("In checkFuncOverLoading");
         //Get superclass name
         String superClass = fetchSuperClassName(curClass);
 
         // If a superclass exists
         if(superClass!=null){
 
-            System.out.println("Superclass is: " + superClass);
+            // System.out.println("Superclass is: " + superClass);
 
             //Get the super's function symbol table
             STPtr sfuncTable = new STPtr(argLen);
             sfuncTable.fetchSuperFunction(superClass, fName, this);
-            System.out.println("pointer is: " + sfuncTable);
+            // System.out.println("pointer is: " + sfuncTable);
             
             //Get the inner's class function symbol table
             STPtr dfuncTable = lhm.get(curClass).lhm.get(fName);
@@ -179,9 +180,9 @@ public class classTable {
     }
 
     //Compare the arguments of 2 function call and function method
-    public void checkFuncArgs(STPtr func1, String callArgs, int argLen, String fName) throws Exception{
+    public void checkFuncArgs(STPtr func1, String[] callArgsArray, int argLen, String fName) throws Exception{
 
-        System.out.println("mpainei mesa2" + argLen);
+        System.out.println("CheckFuncArgs(2), arg's length is: " + argLen);
 
         String type1;
         String type2;
@@ -189,7 +190,7 @@ public class classTable {
         Set <String> keys1 = func1.nextScope.lhm.keySet();
         List<String> listKeys1 = new ArrayList<String>(keys1);
 
-        String [] callArgsArray = callArgs.split(",");
+        // String [] callArgsArray = callArgs.split(",");
 
         for(int i = 0; i < argLen; i++){
 
@@ -281,6 +282,7 @@ class STPtr {
     public void fetchSuperFunction(String superC, String func, classTable cTable) throws Exception {
 
         // System.out.println("superclass is: " + superC);
+        System.out.println("In fetchSuperFunction");
 
         if(superC == null) {
             throw new Exception("Variable/method: " + func + " does not exist at any SuperClass");
@@ -336,6 +338,7 @@ class SymbolTable {
 
     public void methodReturnTypeCheck(String fName, String exprType) throws Exception{
 
+        System.out.println("In methodReturnTypeCheck");
         //Get the STPtr of current function
         STPtr curPtr = lhm.get(fName);
         

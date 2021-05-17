@@ -1,11 +1,11 @@
 class MoreThan4{
     public static void main(String[] a){
-        System.out.println(new MT4().Start(1,2,3,4,5,6));
+        System.out.println(new MT4().Start(true,2,3,4,5,6));
     }
 }
 
 class MT4 {
-    public int Start(Boolean p1, int p2, int p3 , int p4, int p5, int p6){
+    public int Start(int p1, int p2, int p3 , int p4, int p5, int p6){
 	int aux ;
         System.out.println(1);
         System.out.println(p2);
@@ -17,13 +17,13 @@ class MT4 {
 	return aux ;
     }
 
-    public boolean Change(int p1, int p2, int p3 , int p4, int p5, int p6){
+    public int Change(int p1, int p2, int p3 , int p4, int p5, int p6){
         System.out.println(p1);
         System.out.println(p2);
         System.out.println(p3);
         System.out.println(p4);
         System.out.println(p5);
         System.out.println(p6);
-	return true ;
+	return 0 ;
     }
 }
