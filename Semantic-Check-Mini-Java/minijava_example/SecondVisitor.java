@@ -265,28 +265,6 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     }
 
     /**
-    * f0 -> Type()
-    * f1 -> Identifier()
-    * f2 -> ";"
-    */
-    // @Override
-    // public String visit(VarDeclaration n, Void argu) throws Exception {
-        
-    //     String type = n.f0.accept(this, null);
-    //     String name = n.f1.accept(this, null);
-
-    //     System.out.println(type + " " + name);
-    //     // if(curFunc!=null)
-    //         // hMap.insertMethodVariables(curFunc, name, type);
-    //     // else 
-    //         // hMap.insertSymbol(curClass, name, type, -1);
-
-    //     return null;
-    // }
-
-
-
-    /**
     * f0 -> "System.out.println"
     * f1 -> "("
     * f2 -> Expression()
@@ -330,16 +308,6 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return expr;
     }
 
-    /**
-    * f0 -> NotExpression()
-    *       | PrimaryExpression()
-    */
-    // //TODO
-    // @Override
-    // public String visit(Clause n, Void argu) throws Exception {
-    //     String clause = n.f0.accept(this, argu);
-    //     return clause;
-    // }
 
     /**
     * f0 -> Identifier()
@@ -352,9 +320,9 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         
         String id = n.f0.accept(this, argu);
 
-
         System.out.println("In AssignmentStatement, var is : "+ id);
         String idType = hMap.variableType(curClass, curFunc, id);
+        
         if(idType == null) {
             idType = retrieveMethodVariableType(curClass, curFunc, id);
         }
@@ -372,6 +340,44 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
         return null;
     }
+
+    /**
+    * f0 -> Identifier()
+    * f1 -> "["
+    * f2 -> Expression()
+    * f3 -> "]"
+    * f4 -> "="
+    * f5 -> Expression()
+    * f6 -> ";"
+    */
+    @Override
+    public String visit(ArrayAssignmentStatement n, Void argu) throws Exception {
+    
+        String id = n.f0.accept(this, argu);
+        String arrayLookUpVar = n.f2.accept(this, argu);
+        String assgnVar = n.f5.accept(this, argu);
+
+        System.out.println("In ArrayAssignmentStatement, var is : "+ id);
+        String idType = hMap.variableType(curClass, curFunc, id);
+        
+        if(idType == null) {
+            idType = retrieveMethodVariableType(curClass, curFunc, id);
+        }
+
+        System.out.println("Type of variable is: "+ idType);
+        System.out.println("alvanako, auto einai: "+ assgnVar);
+
+        if(!(idType.equals("int[]"))){
+            throw new Exception("Can't handle: [" + idType + "] as int[]");
+        }        
+
+        if((!(arrayLookUpVar.equals("int")) || !(assgnVar.equals("int") ))) {
+            throw new Exception("LookUpVariable/AssignVar must be explicitly int");
+        }
+
+        return null;
+    }
+
 
 
     /**
@@ -458,6 +464,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(ArrayLookup n, Void argu) throws Exception {
 
+        
         String typeOfArray = n.f0.accept(this, argu);
         if (!(typeOfArray.equals("int[]"))){
             throw new Exception("Can't handle simple int variable as array of int");
@@ -471,6 +478,23 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
         return typeOfLookupVar;
     }
+
+    /**
+    * f0 -> PrimaryExpression()
+    * f1 -> "."
+    * f2 -> "length"
+    */
+    @Override
+    public String visit(ArrayLength n, Void argu) throws Exception {
+    
+        String typeOfArray = n.f0.accept(this, argu);    
+        if(!(typeOfArray.equals("int[]"))){
+            throw new Exception("Can't compute length of type: [" + typeOfArray + "]");
+        }
+
+        return "int";
+    }
+
 
     /**
     * f0 -> PrimaryExpression()
@@ -702,13 +726,21 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return n.f1.accept(this, argu);
     }
 
-    public String retrieveMethodType(String curClass, String id) {
+    public String retrieveMethodType(String curClass, String id) throws Exception {
+
+        STPtr fieldCell = null;
 
         //Retrieve the symbol table of this class
         SymbolTable TableClass  = hMap.lhm.get(curClass);
             
         //Retrieve the cell of variable/method
-        STPtr fieldCell = TableClass.lhm.get(id);
+        if(TableClass.lhm.containsKey(id)){
+           fieldCell = TableClass.lhm.get(id);
+        }
+        else {
+            throw new Exception("Method: [" + id + "] does not exist");
+        }
+        // STPtr fieldCell = TableClass.lhm.get(id);
      
         //Retrieve the type of this very expression
         String type = fieldCell.type;
@@ -735,6 +767,16 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         //Retrieve the symbol table of this class
         SymbolTable TableClass  = hMap.lhm.get(currentClass);
             
+        //In case of method=main function
+        if(method==null){
+            if(TableClass.lhm.containsKey(var)){
+                STPtr fieldCell = TableClass.lhm.get(var);
+                type = fieldCell.type;
+                return type;
+            }
+            throw new Exception("There is no such variable: [" + var + "] in main function");
+        }
+
         //Retrieve the cell of variable/method
         STPtr fieldCell = TableClass.lhm.get(method);
      

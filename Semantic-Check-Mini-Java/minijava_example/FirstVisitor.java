@@ -96,10 +96,16 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(MainClass n, Void argu) throws Exception {
         String classname = n.f1.accept(this, null);
+        String argz = n.f11.accept(this, argu);
+        
         System.out.println("Class: " + classname);
 
         hMap.insert(classname);
         updateClass(classname);
+
+        if(argz!=null){
+            hMap.insertSymbol(curClass, argz, "String[]", -1);
+        }
 
         super.visit(n, argu);
 
