@@ -13,42 +13,69 @@ public class Main {
     //Initialize symbol table.
     public static classTable hMap = new classTable();
     public static void main(String[] args) throws Exception {
-        if(args.length != 1){
-            System.err.println("Usage: java Main <inputFile>");
+
+        if(args.length < 1){
+            System.err.println("Usage: java Main [MainClassName] [file1] [file2] . . . [fileN]");
             System.exit(1);
         }
 
         FileInputStream fis = null;
         try{
 
-            fis = new FileInputStream(args[0]);
-            MiniJavaParser parser = new MiniJavaParser(fis);
+            for(int i = 0; i < args.length; i++){
 
-            Goal root = parser.Goal();
+                System.out.println("File: " + args[i] + "\n") ;
 
-            System.err.println("Program parsed successfully.");  
+                fis = new FileInputStream(args[i]);
+                MiniJavaParser parser = new MiniJavaParser(fis);
 
-            //Initialize first visitor.
-            FirstVisitor evalF = new FirstVisitor();
-            //Accept the first visitor
-            root.accept(evalF, null);
+                Goal root = parser.Goal();
+
+                //Initialize first visitor.
+                FirstVisitor evalF = new FirstVisitor();
+                //Accept the first visitor
+                root.accept(evalF, null);
+                
+                //Get the symbolTable which we fill'd up in the first visit
+                classTable symbolTable = evalF.getClassTable();
+
+                //Initialize the second visitor
+                SecondVisitor evalS = new SecondVisitor(symbolTable);
+
+                //Accept the second visitor
+                root.accept(evalS, null);
+
+                //PrintOffsets
+                symbolTable.PrintOffsets();
+
+                System.out.println();
+
+            }
+
+            // fis = new FileInputStream(args[0]);
+            // MiniJavaParser parser = new MiniJavaParser(fis);
+
+            // Goal root = parser.Goal();
+
+            // // System.err.println("Program parsed successfully.");  
+
+            // //Initialize first visitor.
+            // FirstVisitor evalF = new FirstVisitor();
+            // //Accept the first visitor
+            // root.accept(evalF, null);
             
-            //Print the first scope of classes
-            // evalF.printClassNames();
 
-            //Get the symbolTable which we fill'd up in the first visit
-            classTable symbolTable = evalF.getClassTable();
+            // //Get the symbolTable which we fill'd up in the first visit
+            // classTable symbolTable = evalF.getClassTable();
 
-            // SymbolTable st= symbolTable.lhm.get("QS");
-            // STPtr var = st.lhm.get("number");
-            // System.out.println("number type is: " + var.type);
+            // //Initialize the second visitor
+            // SecondVisitor evalS = new SecondVisitor(symbolTable);
 
-            //Initialize the second visitor
-            SecondVisitor evalS = new SecondVisitor(symbolTable);
-            System.out.println("--- SECOND VISITOR ---\n");
+            // //Accept the second visitor
+            // root.accept(evalS, null);
 
-            //Accept the second visitor
-            root.accept(evalS, null);
+            // //PrintOffsets
+            // symbolTable.PrintOffsets();
 
         }
         catch(ParseException ex){

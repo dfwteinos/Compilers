@@ -49,23 +49,20 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
 
 
         Set <String> keys = hMap.lhm.keySet();
-        // System.out.println(keys[0]);
-        // System.out.println(hMap.get(keys(1)));
-        // System.out.println(hMap.get("Factorial"));
             for( String key : keys) {
-                System.out.println(key + "--" + hMap.lhm.get(key));
+                // System.out.println(key + "--" + hMap.lhm.get(key));
                 SymbolTable curTable = hMap.lhm.get(key);
 
                 Set <String> kleidia = curTable.lhm.keySet();
-                System.out.println(kleidia);
-                System.out.println(curTable.superC);
+                // System.out.println(kleidia);
+                // System.out.println(curTable.superC);
 
                 STPtr deepTable = curTable.lhm.get("ComputeFac");
 
                 if(deepTable!=null){
 
                     Set <String> keyz = deepTable.nextScope.lhm.keySet();
-                    System.out.println(keyz);
+                    // System.out.println(keyz);
                     // for (String kie: keyz) {
                         // System.out.println(kie + "--" + deepTable.nextScope.lhm.get(kie));
                     // }    
@@ -98,7 +95,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, null);
         String argz = n.f11.accept(this, argu);
         
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         hMap.insert(classname);
         updateClass(classname);
@@ -109,7 +106,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
 
         super.visit(n, argu);
 
-        System.out.println();
+        // System.out.println();
 
         return null;
     }
@@ -125,7 +122,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(ClassDeclaration n, Void argu) throws Exception {
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         hMap.insert(classname);
         updateCurrentData(classname, null);
@@ -133,9 +130,9 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
         super.visit(n, argu);
 
         SymbolTable cl = hMap.lhm.get(classname);
-        System.out.println(cl.lhm.keySet());
+        // System.out.println(cl.lhm.keySet());
 
-        System.out.println();
+        // System.out.println();
 
         return null;
     }
@@ -155,7 +152,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, null);
         String super_class = n.f3.accept(this, null);
 
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         hMap.checkExtendsExistence(classname, super_class);
         hMap.insert(classname, super_class);
@@ -163,7 +160,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
 
         super.visit(n, argu);
 
-        System.out.println();
+        // System.out.println();
 
         return null;
     }
@@ -208,8 +205,8 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
         //If we have Overloading, do type checking
         hMap.checkFuncOverloading(curClass, myName, argLength); 
         
-        System.out.println(myType + " " + myName + " -- " + argumentList);
-        System.out.println(argLength);
+        // System.out.println(myType + " " + myName + " -- " + argumentList);
+        // System.out.println(argLength);
 
         super.visit(n, argu);
 
@@ -275,7 +272,7 @@ class FirstVisitor extends GJDepthFirst<String, Void>{
         String type = n.f0.accept(this, null);
         String name = n.f1.accept(this, null);
 
-        System.out.println(type + " " + name);
+        // System.out.println(type + " " + name);
         if(curFunc!=null)
             hMap.insertMethodVariables(curFunc, name, type);
         else 

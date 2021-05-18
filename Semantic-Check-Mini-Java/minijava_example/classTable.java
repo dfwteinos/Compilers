@@ -79,7 +79,11 @@ public class classTable {
     //Check for Overloading and also do some type check, if it exists
     public void checkFuncOverloading(String curClass, String fName, int argLen) throws Exception {
         
-        System.out.println("In checkFuncOverLoading");
+        // System.out.println("In checkFuncOverLoading");
+        
+        SymbolTable funcTable = lhm.get(curClass);
+        boolean ifExists = funcTable.lhm.containsKey(fName);
+
         //Get superclass name
         String superClass = fetchSuperClassName(curClass);
 
@@ -90,7 +94,7 @@ public class classTable {
 
             //Get the super's function symbol table
             STPtr sfuncTable = new STPtr(argLen);
-            sfuncTable.fetchSuperFunction(superClass, fName, this);
+            sfuncTable.fetchSuperFunction(superClass, fName, this, ifExists);
             // System.out.println("pointer is: " + sfuncTable);
             
             //Get the inner's class function symbol table
@@ -118,12 +122,6 @@ public class classTable {
             type = class_Table.variableType(var);
         }
 
-        // else{
-            //If not, check if it's a variable of inner function of this class
-            // STPtr funcTable = class_Table.lhm.get(curFunc);
-            // type = funcTable.nextScope.variableType(var);
-        // }
-
         return type;
     }
 
@@ -137,13 +135,13 @@ public class classTable {
     //Compare the arguments of 2 identical function in case of overloading
     public void checkFuncArgs(STPtr func1, STPtr func2, int argLen, String fName) throws Exception{
 
-        System.out.println("mpainei mesa" + argLen);
+        // System.out.println("mpainei mesa" + argLen);
 
         //Functions must be the same type
         if( func1.type == func2.type ){
 
-            System.out.println(func2.numArgs);
-            System.out.println(func1.numArgs);
+            // System.out.println(func2.numArgs);
+            // System.out.println(func1.numArgs);
             //Function must also have the same number of args
             if(func1.numArgs != func2.numArgs){
                 throw new Exception("Function(s) :[" + fName + "] have different number of arguments");
@@ -182,7 +180,7 @@ public class classTable {
     //Compare the arguments of 2 function call and function method
     public void checkFuncArgs(STPtr func1, String[] callArgsArray, int argLen, String fName) throws Exception{
 
-        System.out.println("CheckFuncArgs(2), arg's length is: " + argLen);
+        // System.out.println("CheckFuncArgs(2), arg's length is: " + argLen);
 
         String type1;
         String type2;
@@ -229,6 +227,26 @@ public class classTable {
 
         return superC;
     }
+
+    //Print the offsets of variables/methods
+    public void PrintOffsets() throws Exception {
+
+        Set <String> keys1 = lhm.keySet();
+        List<String> listKeys1 = new ArrayList<String>(keys1);
+        SymbolTable classTable;
+        
+        for(ListIterator<String> iter = listKeys1.listIterator(); iter.hasNext();){
+        
+            String curClassName = iter.next();
+            System.out.println("----------- Class " + curClassName + "-----------");
+            
+            classTable = lhm.get(curClassName);
+            classTable.printVarAndMethods(curClassName, this);
+            System.out.println();
+        }
+
+    }
+
 }
 
 //Pointer to a symbol table
@@ -279,13 +297,18 @@ class STPtr {
     }
 
     //Fetch a super-class function, go up as many level as it gets.
-    public void fetchSuperFunction(String superC, String func, classTable cTable) throws Exception {
+    public void fetchSuperFunction(String superC, String func, classTable cTable, boolean ifExists) throws Exception {
 
         // System.out.println("superclass is: " + superC);
-        System.out.println("In fetchSuperFunction");
+        // System.out.println("In fetchSuperFunction");
 
         if(superC == null) {
-            throw new Exception("Variable/method: " + func + " does not exist at any SuperClass");
+            if(!ifExists){
+                throw new Exception("Variable/method: " + func + " does not exist at any SuperClass");
+            }
+            else
+                return;
+            // throw new Exception("Variable/method: " + func + " does not exist at any SuperClass");
         }
 
         SymbolTable classT = cTable.lhm.get(superC);
@@ -293,7 +316,7 @@ class STPtr {
 
         if(funcPtr!=null){
 
-            System.out.println("peos peos peos" + func);
+            // System.out.println("peos peos peos" + func);
             this.type = funcPtr.type;
             this.nextScope = funcPtr.nextScope;
             this.numArgs = funcPtr.numArgs;
@@ -301,7 +324,7 @@ class STPtr {
         }
 
         else    
-            fetchSuperFunction(classT.superC, func, cTable);
+            fetchSuperFunction(classT.superC, func, cTable, ifExists);
     }
 
 
@@ -338,13 +361,13 @@ class SymbolTable {
 
     public void methodReturnTypeCheck(String fName, String exprType) throws Exception{
 
-        System.out.println("In methodReturnTypeCheck");
+        // System.out.println("In methodReturnTypeCheck");
         //Get the STPtr of current function
         STPtr curPtr = lhm.get(fName);
         
         //Get the type of the function
         String fType = curPtr.type;
-        System.out.println(fType);
+        // System.out.println(fType);
 
         //Check if we have type equality between function and returning type
         if(fType != exprType) {
@@ -371,6 +394,107 @@ class SymbolTable {
         int numArgs = curPtr.numArgs;
 
         return numArgs;
+    }
+
+    public void printVarAndMethods(String className, classTable linkedh) throws Exception{
+
+        Set <String> keys1 = lhm.keySet();
+        List<String> listKeys1 = new ArrayList<String>(keys1);
+        // System.out.println(listKeys1);
+
+        int offCounter = 0;
+
+        int var_Method_Identifier;
+
+        boolean varFlag = false;
+        boolean methodFlag = false;
+        boolean methodFlag2 = true;
+        boolean offCounterFlag = false;
+
+        for(ListIterator<String> iter = listKeys1.listIterator(); iter.hasNext();){
+
+            if(!varFlag){
+                System.out.println("---Variables---");
+                varFlag = true;
+            }
+
+            String varOrMethod = iter.next();
+            STPtr varOrMethodType = lhm.get(varOrMethod);
+            
+            var_Method_Identifier = varOrMethodType.numArgs;
+            if(var_Method_Identifier >= 0) {
+                methodFlag = true;
+            }
+
+            if(methodFlag==true && methodFlag2==true){
+                System.out.println("---Methods---");
+                methodFlag2 = false;
+                offCounterFlag = true;
+                offCounter = 0;
+            }
+
+            if(superC!=null){
+                
+                int tempCounter = offCounter;
+                offCounter = setOverloadOffset(varOrMethod, className, linkedh, offCounter);
+                
+                //There is no same super-function
+                if(tempCounter!=offCounter){
+                    System.out.println(className + "." + varOrMethod + " : " + tempCounter);
+                    offCounter = tempCounter;
+                }
+            }
+
+            else {
+
+                System.out.println(className + "." + varOrMethod + " : " + offCounter);
+                offCounter = setOffSetCounter(varOrMethodType, offCounter, offCounterFlag);
+            }
+
+        }
+
+    }
+
+    public int setOverloadOffset(String fName, String curClass, classTable cTable, int offCounter) throws Exception {
+
+        STPtr sfuncTable = new STPtr(-1);
+        sfuncTable.fetchSuperFunction(superC, fName, cTable, true);
+
+        //There is no such function in superClass
+        if(sfuncTable.numArgs != -1){
+            offCounter += 8;
+            return offCounter;
+        }
+        return offCounter;        
+    }
+
+    public int setOffSetCounter(STPtr varMethodPtr, int offCounter, boolean funcStep){
+
+        if(funcStep==true){
+            offCounter += 8;
+            return offCounter;
+        }
+
+        String type = null;
+
+        if(varMethodPtr!=null){
+            type = varMethodPtr.type;
+        }
+
+        if(type.equals("int")){
+            offCounter += 4;
+        }
+
+        else if (type.equals("boolean")){
+            offCounter += 1;
+        }
+
+        else {
+            offCounter += 8;
+        }
+
+        return offCounter;
+
     }
 
 }

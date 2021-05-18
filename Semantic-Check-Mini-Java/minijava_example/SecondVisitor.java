@@ -23,7 +23,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public SecondVisitor(classTable lhMap) {
 
         hMap = lhMap;
-        System.out.println(hMap.lhm.keySet());
+        // System.out.println(hMap.lhm.keySet());
     }
 
     public classTable getTable(){
@@ -51,23 +51,20 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
 
         Set <String> keys = hMap.lhm.keySet();
-        // System.out.println(keys[0]);
-        // System.out.println(hMap.get(keys(1)));
-        // System.out.println(hMap.get("Factorial"));
             for( String key : keys) {
-                System.out.println(key + "--" + hMap.lhm.get(key));
+                // System.out.println(key + "--" + hMap.lhm.get(key));
                 SymbolTable curTable = hMap.lhm.get(key);
 
                 Set <String> kleidia = curTable.lhm.keySet();
-                System.out.println(kleidia);
-                System.out.println(curTable.superC);
+                // System.out.println(kleidia);
+                // System.out.println(curTable.superC);
 
                 STPtr deepTable = curTable.lhm.get("ComputeFac");
 
                 if(deepTable!=null){
 
                     Set <String> keyz = deepTable.nextScope.lhm.keySet();
-                    System.out.println(keyz);
+                    // System.out.println(keyz);
                     // for (String kie: keyz) {
                         // System.out.println(kie + "--" + deepTable.nextScope.lhm.get(kie));
                     // }    
@@ -98,14 +95,14 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     @Override
     public String visit(MainClass n, Void argu) throws Exception {
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         // hMap.insert(classname);
         updateClass(classname);
 
         super.visit(n, argu);
 
-        System.out.println();
+        // System.out.println();
 
         return null;
     }
@@ -122,7 +119,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(ClassDeclaration n, Void argu) throws Exception {
 
         String classname = n.f1.accept(this, null);
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         // hMap.insert(classname);
         updateCurrentData(classname, null);
@@ -153,7 +150,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         String classname = n.f1.accept(this, null);
         String super_class = n.f3.accept(this, null);
 
-        System.out.println("Class: " + classname);
+        // System.out.println("Class: " + classname);
 
         // hMap.checkExtendsExistence(classname, super_class);
         // hMap.insert(classname, super_class);
@@ -161,7 +158,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
         super.visit(n, argu);
 
-        System.out.println();
+        // System.out.println();
 
         return null;
     }
@@ -204,11 +201,11 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         //Check if we have function Overloading with a superclass
         //If we have Overloading, do type checking
 
-        System.out.println(myType + " " + myName + " -- " + argumentList);
+        // System.out.println(myType + " " + myName + " -- " + argumentList);
         
         //Check for return type between function and returning variable
         String expr = n.f10.accept(this, null);
-        System.out.println("In methoddecl,return expr is: " + expr);
+        // System.out.println("In methoddecl,return expr is: " + expr);
         hMap.methodReturnTypeCheck(curClass, myName, expr);
         
         super.visit(n, argu);
@@ -276,7 +273,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(PrintStatement n, Void argu) throws Exception {
 
         String expr = n.f2.accept(this, argu);
-        System.out.println("In print, expr is: " + expr);
+        // System.out.println("In print, expr is: " + expr);
 
         //TODO When I'll cover all possible outcomes for expression(!).
         if(!(expr.equals("int"))){
@@ -303,7 +300,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(Expression n, Void argu) throws Exception {
 
         String expr = n.f0.accept(this, argu);
-        System.out.println("Expression is: " + expr);
+        // System.out.println("Expression is: " + expr);
         
         return expr;
     }
@@ -320,22 +317,35 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         
         String id = n.f0.accept(this, argu);
 
-        System.out.println("In AssignmentStatement, var is : "+ id);
+        // System.out.println("In AssignmentStatement, var is : "+ id);
         String idType = hMap.variableType(curClass, curFunc, id);
         
         if(idType == null) {
             idType = retrieveMethodVariableType(curClass, curFunc, id);
         }
-        System.out.println("Type of variable is: "+ idType);
+        // System.out.println("Type of variable is: "+ idType);
         String exprType = n.f2.accept(this, argu);
-        System.out.println("Type of expr is: " + exprType);
+        // System.out.println("Type of expr is: " + exprType);
 
         if(exprType.equals("this")){
             exprType = curClass;
         }
 
         if(!(idType.equals(exprType))){
-            throw new Exception("Var: [" + id + "] is: "+ idType + " , and it's assigned as " + exprType + ".");
+
+            //In case of superclasses
+            String superC = hMap.fetchSuperClassName(exprType);
+            if(superC!=null){
+                if(!(idType.equals(superC))){
+                    throw new Exception("Var: [" + id + "] is: "+ idType + " , and it's assigned as " + exprType + ".");
+                }
+                else
+                    return null;
+            }
+
+            else
+                throw new Exception("Var: [" + id + "] is: "+ idType + " , and it's assigned as " + exprType + ".");
+
         }
 
         return null;
@@ -357,15 +367,15 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         String arrayLookUpVar = n.f2.accept(this, argu);
         String assgnVar = n.f5.accept(this, argu);
 
-        System.out.println("In ArrayAssignmentStatement, var is : "+ id);
+        // System.out.println("In ArrayAssignmentStatement, var is : "+ id);
         String idType = hMap.variableType(curClass, curFunc, id);
         
         if(idType == null) {
             idType = retrieveMethodVariableType(curClass, curFunc, id);
         }
 
-        System.out.println("Type of variable is: "+ idType);
-        System.out.println("alvanako, auto einai: "+ assgnVar);
+        // System.out.println("Type of variable is: "+ idType);
+        // System.out.println("alvanako, auto einai: "+ assgnVar);
 
         if(!(idType.equals("int[]"))){
             throw new Exception("Can't handle: [" + idType + "] as int[]");
@@ -378,6 +388,28 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         return null;
     }
 
+    /**
+    * f0 -> Clause()
+    * f1 -> "&&"
+    * f2 -> Clause()
+    */
+   @Override
+   public String visit(AndExpression n, Void argu) throws Exception {
+      
+        String type1 = n.f0.accept(this, argu);
+        String type2 = n.f2.accept(this, argu);
+
+        // System.out.println("And expression1: [" + type1 + "] and expreesion2: [" + type2 + "]");
+        if(type1==null || type2==null){
+            return "boolean";
+        }
+
+        if( !(type1.equals("boolean")) || !(type1.equals("boolean")) ){
+            throw new Exception("Both variables must be boolean if we have && operator");
+        }
+
+        return "boolean";
+   }
 
 
     /**
@@ -395,7 +427,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
             throw new Exception("Can't multiply: [" + type1 + "] with [" + type2 + "].");
         }
-        return "int";
+        return "boolean";
     }
 
     /**
@@ -544,11 +576,13 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
             callArgLength = 0;
         }
 
-        System.out.println("TYPE IN MESSAGE SEND IS: " + type);
-        System.out.println("expression list is: " + n.f4.accept(this, argu));
+        // System.out.println("TYPE IN MESSAGE SEND IS: " + type);
+        // System.out.println("expression list is: " + n.f4.accept(this, argu));
 
         //Retrieve the length of arguments in the declare of the function
-        int methodArgLength = hMap.methodNumArgs(currentClass, id);
+        // int methodArgLength = hMap.methodNumArgs(currentClass, id);
+        //REMOVED ^
+        int methodArgLength = retrieveMethodArguments(currentClass, id);
 
         //If the #CallArgs != #DeclareArgs have different length, throw an Exception 
         if(callArgLength!=methodArgLength) {
@@ -600,9 +634,32 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     */
     @Override
     public String visit(ExpressionTerm n, Void argu) throws Exception {
-        
         return n.f1.accept(this, null);
     }
+
+    /**
+    * f0 -> NotExpression()
+    *       | PrimaryExpression()
+    */
+    @Override
+    public String visit(Clause n, Void argu) throws Exception {
+        return n.f0.accept(this, argu);
+    }
+
+    /**
+    * f0 -> "!"
+    * f1 -> Clause()
+    */
+    public String visit(NotExpression n, Void argu) throws Exception {
+
+        String typeClause = n.f1.accept(this, argu);
+
+        if(!typeClause.equals("boolean")){
+            // System.out.println("Can't have non-boolean value in (!) symbol");
+        }
+        return typeClause;
+    }
+
 
     /**
     * f0 -> IntegerLiteral()
@@ -618,7 +675,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
     public String visit(PrimaryExpression n, Void argu) throws Exception {
         
         String prExpr = n.f0.accept(this, argu);
-        System.out.println("prExpr is: " + prExpr);
+        // System.out.println("prExpr is: " + prExpr);
 
         //Will handle it afterwards
         if(prExpr==null){
@@ -635,7 +692,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
             }
 
             else {
-                System.out.println("Cur function is: " + curFunc + " and curClass is: " + curClass);
+                // System.out.println("Cur function is: " + curFunc + " and curClass is: " + curClass);
                 String type = retrieveMethodVariableType(curClass, curFunc, prExpr);
                 return type;
             }
@@ -738,7 +795,11 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
            fieldCell = TableClass.lhm.get(id);
         }
         else {
-            throw new Exception("Method: [" + id + "] does not exist");
+
+            fieldCell = new STPtr(0);
+            String superC    = hMap.fetchSuperClassName(curClass); 
+            fieldCell.fetchSuperFunction(superC, id, hMap, false);
+            // throw new Exception("Method: [" + id + "] does not exist");
         }
         // STPtr fieldCell = TableClass.lhm.get(id);
      
@@ -746,6 +807,32 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         String type = fieldCell.type;
 
         return type;
+    }
+
+    public int retrieveMethodArguments(String curClass, String id) throws Exception {
+
+        STPtr fieldCell = null;
+
+        //Retrieve the symbol table of this class
+        SymbolTable TableClass  = hMap.lhm.get(curClass);
+            
+        //Retrieve the cell of variable/method
+        if(TableClass.lhm.containsKey(id)){
+           fieldCell = TableClass.lhm.get(id);
+        }
+        else {
+
+            fieldCell = new STPtr(0);
+            String superC    = hMap.fetchSuperClassName(curClass); 
+            fieldCell.fetchSuperFunction(superC, id, hMap, false);
+            // throw new Exception("Method: [" + id + "] does not exist");
+        }
+        // STPtr fieldCell = TableClass.lhm.get(id);
+     
+        //Retrieve the type of this very expression
+        int numArgs = fieldCell.numArgs;
+
+        return numArgs;
     }
 
     public STPtr retrieveMethodSTPtr(String curClass, String id) {
@@ -761,7 +848,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
 
     public String retrieveMethodVariableType(String currentClass, String method, String var) throws Exception {
 
-        System.out.println("IN retrieveMethodVariableType");
+        // System.out.println("IN retrieveMethodVariableType");
         String type = null;
         
         //Retrieve the symbol table of this class
@@ -781,7 +868,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         STPtr fieldCell = TableClass.lhm.get(method);
      
         // System.out.println("test1");
-        System.out.println(fieldCell.nextScope);
+        // System.out.println(fieldCell.nextScope);
         //Retrieve the symbol table of this method 
         //Check if this variable exists in function's symbol table
         if(fieldCell.nextScope != null){
@@ -808,7 +895,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         //If this variable does not exists in method's symbol table
         //Check if it's a class variable (field)
         // System.out.println("test5");
-        System.out.println(TableClass.lhm.keySet());
+        // System.out.println(TableClass.lhm.keySet());
 
 
         if(TableClass.lhm.containsKey(var)){
@@ -825,7 +912,7 @@ class SecondVisitor extends GJDepthFirst<String, Void>{
         if(superC!=null){
             
             STPtr sVar = new STPtr(-1);
-            sVar.fetchSuperFunction(superC, var, hMap);
+            sVar.fetchSuperFunction(superC, var, hMap, false);
             type = sVar.type;
         }
 
