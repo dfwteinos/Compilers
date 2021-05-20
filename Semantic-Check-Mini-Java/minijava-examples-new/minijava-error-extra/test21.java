@@ -12,7 +12,7 @@ class Test{
 
 	op = new int[10];
 
-	op[true] = 20;		// TE
+	op[true] = 5;		// TE
 
 	return 0;
     }

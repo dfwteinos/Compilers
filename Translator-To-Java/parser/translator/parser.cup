@@ -1,0 +1,202 @@
+/* Simple MiniJava language; parser evaluates simple and/or complicated function declarations/calls */
+/**
+ *  Package and Import Specifications
+ */
+import java_cup.runtime.*;
+
+/**
+ *  Usercode Components
+ */
+parser code {:
+    // Connect this parser to a scanner!
+    Scanner s;
+    Parser(Scanner s){ this.s=s; }
+:}
+
+/* define how to connect to the scanner! */
+scan with {: return s.next_token(); :};
+
+/**
+ *  Symbol Lists
+ */
+
+/* Terminals (tokens returned by the scanner). */
+terminal            PLUS, LPAREN, RPAREN, COMMA, BEGIN, END;
+terminal            IF, ELSE;
+terminal            POINT;
+terminal            PREFIX, SUFFIX;
+terminal String     STRING_LITERAL, SENTENCE;
+
+/*  Non terminals */
+non terminal            program;
+// Non terminals for function declarations
+non terminal String     func_decl, function, frame, body_func, concat, plus_sign;
+// Non terminals for function calls
+non terminal String     func_call, struct_call, params, args;
+// Non terminals for general utility 
+non terminal String     sent, id, more;
+// Non terminals for if-else expressions
+non terminal String     if_else_expr, conditions, suf_pre, mult_string, conc_sign;
+non terminal String     inner_cond, inner_func, inner_par, in_args;
+
+/**
+ *  Precedence Declarations
+ */
+
+precedence left LPAREN, RPAREN;
+precedence left SENTENCE;
+precedence left STRING_LITERAL;
+precedence left IF, ELSE;
+precedence left PREFIX, SUFFIX;
+
+// precedence left SENTENCE
+
+/**
+ *  The Grammar Rules
+ */
+
+program ::= func_decl: decl	{:  System.out.println("\n}");
+                            :}
+        ;
+
+
+    /* Multiple function calls -or- top level expressions */
+/*  :-----------------------------------------------------:  */
+/*  :           F U N C T I O N S   C A L L S             :  */
+/*  :-----------------------------------------------------:  */
+
+func_call   ::= struct_call: rest func_call: e                              {: RESULT = rest + "\n" + e; :}
+            |                                                               {: RESULT = ""; :}
+            ;
+
+struct_call ::= sent: fname LPAREN params: identifiers RPAREN               {: RESULT = String.format("\t\tSystem.out.println(%s(%s));", fname, identifiers); :}
+            |   sent: fname LPAREN RPAREN                                   {: RESULT = String.format("\t\tSystem.out.println(%s());", fname); :}
+            |   conditions: expr                                            {: RESULT = String.format("\t\tSystem.out.println(%s);", expr); :}
+            ;
+
+params      ::= STRING_LITERAL: s mult_string: sen STRING_LITERAL: e args:fin 
+                {: RESULT = "\"" + sen + "\b\"" + fin; :}
+            
+            |   STRING_LITERAL: onarg STRING_LITERAL: e args: fin           {: RESULT = String.format("\" \"%s", fin); :} 
+            |   sent: fname LPAREN params: identifiers RPAREN args: fin     {: RESULT = String.format("%s(%s)%s", fname, identifiers, fin); :}
+            |   sent: fname LPAREN RPAREN args: fin                         {: RESULT = String.format("%s()%s", fname, fin); :}
+            ;
+
+args        ::= COMMA params: arg                                           {: RESULT = String.format(", %s", arg); :}                        
+            |                                                               {: RESULT = String.format(""); :}
+            ;
+
+
+/* Main function */
+func_decl   ::= function: res func_decl: e              {: System.out.printf("%s", res);
+                                                        :} 
+
+            | func_call: calls                          {: System.out.println("\n\nimport java.lang.*;\n");
+			                                            System.out.println("public class Main {");
+			                                            System.out.println("\tpublic static void main(String[] args) {");
+
+                                                        /* Function calls goes here */
+                                                        System.out.printf("%s", calls);
+                                                        System.out.println("\t}");
+                                                        :}
+            ;
+
+            /* Multiple function declarations */
+/* :-----------------------------------------------------:*/
+/* :     F U N C T I O N S   D E C L A R A T I O N S     :*/
+/* :-----------------------------------------------------:*/
+
+/* Single function declarations */
+function    ::= frame: decl BEGIN body_func: body END               {: RESULT = String.format("\n\tpublic static String %s {\n\t\t return %s;\n\t}\n", decl, body ); :}
+            ;
+
+body_func   ::= concat: e                                           {: RESULT = String.format("%s", e); :} 
+            | STRING_LITERAL: s sent: sen STRING_LITERAL: e         {: RESULT = String.format("\"%s\"", sen); :} 
+            ;
+
+concat      ::= sent: sen plus_sign: e                                                  {: RESULT = String.format("%s%s", sen, e); :}                 
+            | STRING_LITERAL: s mult_string: sen STRING_LITERAL: e plus_sign: fin       {: RESULT = String.format("\"%s\"%s", sen,fin); :}
+            | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL: e plus_sign: fin          {: RESULT = String.format("\"%s\"%s", sen,fin); :}
+            | inner_func: inf plus_sign: e                                              {: RESULT = String.format("%s%s", inf, e); :}                 
+            | if_else_expr: if_else                                                     {: RESULT = String.format("%s", if_else); :}
+            ;
+
+plus_sign   ::= PLUS concat: fin_var                                {: RESULT = ".concat(" + fin_var + ")";:}                
+            |                                                       {: RESULT = ""; :}
+            ;
+
+/* Main function frame with identifiers => name(), surname(Okay) | FUNCTION DECLARATIONS */
+
+frame       ::= sent: sen LPAREN id:e RPAREN        {: RESULT = String.format("%s(%s)"x, sen, e); :}
+            | sent: sen LPAREN RPAREN               {: RESULT = String.format("%s()", sen); :}
+            ;
+
+sent        ::= SENTENCE: sen                       {: RESULT = String.format("%s", sen); :}                 
+            ;
+
+id          ::= sent: sen more: e                   {: RESULT = String.format("String %s%s", sen, e); :}                 
+            ;
+
+more        ::= COMMA id: arg                       {: RESULT = String.format(", %s", arg); :}                        
+            |                                       {: RESULT = String.format(""); :}
+            ;
+
+            /* Multiple if-else expressions */
+/* :-----------------------------------------------------:*/
+/* :              IF - ELSE EXPRESSIONS                  :*/
+/* :-----------------------------------------------------:*/
+
+if_else_expr    ::= IF LPAREN conditions: cond1 RPAREN conditions: cond2 ELSE conditions: cond3     
+                    {:RESULT = "(" + cond1 + ") ? " + cond2 + " : " + cond3; :} 
+                ;
+
+conditions::= SENTENCE: sen conc_sign: sente                                        {: RESULT = sen + sente;        :}       
+            | inner_cond: sen suf_pre: expr                                         {: RESULT = expr + sen + ")";   :}
+            | inner_func: inf conc_sign: innFunc                                    {: RESULT = inf + innFunc;      :}
+            | STRING_LITERAL: s mult_string: sen STRING_LITERAL conc_sign: e        {: RESULT = String.format("\"%s\"%s", sen, e);  :}
+            | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL conc_sign: e           {: RESULT = String.format("\"%s\"%s", sen, e);  :}
+            | if_else_expr: if_else                                                 {: RESULT = if_else;            :}
+            ;   
+
+conc_sign   ::= PLUS conditions: fin_var                                            {: RESULT = ".concat(" + fin_var + ")";:}                
+            |                                                                       {: RESULT = ""; :}
+            ;
+
+inner_func  ::= SENTENCE: fname LPAREN inner_par: identifiers RPAREN                {: RESULT = fname + "(" + identifiers + ")"; :}
+            |   SENTENCE: fname LPAREN RPAREN                                       {: RESULT = fname + "()"; :}
+            ;
+
+inner_par   ::= STRING_LITERAL: s sent: sen STRING_LITERAL: e in_args: fin          {: RESULT = String.format("\"%s\"%s", sen, fin); :} 
+            |   STRING_LITERAL: onarg STRING_LITERAL: e in_args: fin                {: RESULT = String.format("\" \"%s", fin); :} 
+            
+            |   STRING_LITERAL: s mult_string: sen STRING_LITERAL: e in_args: fin               
+                {: RESULT = String.format("\"%s\"%s", sen, fin);  :}
+            
+            |   PLUS SENTENCE: sen in_args: fin                                 
+                {: RESULT = ".concat(" + sen + ")" + fin; :}
+            
+            |   PLUS STRING_LITERAL: s mult_string: sen STRING_LITERAL: e in_args: fin  
+                {: RESULT = ".concat(\"" + sen + "\")" + fin; :}
+
+            |   sent: fname LPAREN inner_par: identifiers RPAREN in_args: fin           {: RESULT = String.format("%s(%s)%s", fname, identifiers, fin); :}
+            |   sent: fname LPAREN RPAREN in_args: fin                                  {: RESULT = String.format("%s()%s", fname, fin); :}
+            |   sent: sen in_args: fin                                                  {: RESULT = String.format("%s%s",sen, fin); :}
+            ;
+
+in_args  ::=  COMMA inner_par: arg                                      {: RESULT = String.format(", %s", arg); :}                        
+            |                                                           {: RESULT = String.format(""); :}
+            | inner_par: arg    {:RESULT = arg; :}
+            ;
+
+inner_cond  ::= SENTENCE: sen                                           {: RESULT = sen; :}
+            | STRING_LITERAL: s SENTENCE: sen STRING_LITERAL: e         {: RESULT = String.format("\"%s\"", sen); :} 
+            ;
+
+mult_string ::= sent: sen mult_string: e                        {: RESULT = String.format("%s %s", sen, e); :}
+            | POINT: p mult_string: e                           {: RESULT = String.format(".%s", e); :}
+            |                                                   {: RESULT = ""; :}
+            ;
+
+suf_pre     ::= PREFIX: pre conditions: cond                    {: RESULT = cond + ".startsWith(";  :}
+            |   SUFFIX: suf conditions: cond                    {: RESULT = cond + ".endsWith(" ;   :}
+            ;

@@ -1,6 +1,6 @@
 class MoreThan4{
     public static void main(String[] a){
-        System.out.println(new MT4().Start(true,2,3,4,5,6));
+        System.out.println(new MT4().Start(1,2,3,4,5,6));
     }
 }
 
@@ -13,7 +13,7 @@ class MT4 {
         System.out.println(p4);
         System.out.println(p5);
         System.out.println(p6);
-        aux = this.Change(p6,p5,p4,p3,p2,p1);//TE
+        aux = this.Change(p6,p5,p4,p3,p2);//TE
 	return aux ;
     }
 

@@ -52,31 +52,6 @@ public class Main {
 
             }
 
-            // fis = new FileInputStream(args[0]);
-            // MiniJavaParser parser = new MiniJavaParser(fis);
-
-            // Goal root = parser.Goal();
-
-            // // System.err.println("Program parsed successfully.");  
-
-            // //Initialize first visitor.
-            // FirstVisitor evalF = new FirstVisitor();
-            // //Accept the first visitor
-            // root.accept(evalF, null);
-            
-
-            // //Get the symbolTable which we fill'd up in the first visit
-            // classTable symbolTable = evalF.getClassTable();
-
-            // //Initialize the second visitor
-            // SecondVisitor evalS = new SecondVisitor(symbolTable);
-
-            // //Accept the second visitor
-            // root.accept(evalS, null);
-
-            // //PrintOffsets
-            // symbolTable.PrintOffsets();
-
         }
         catch(ParseException ex){
             System.out.println(ex.getMessage());

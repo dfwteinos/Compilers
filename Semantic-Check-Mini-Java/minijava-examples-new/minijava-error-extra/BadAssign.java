@@ -5,7 +5,6 @@ class BadAssign {
         A a;
         a = i;
     }
-
 }
 
 

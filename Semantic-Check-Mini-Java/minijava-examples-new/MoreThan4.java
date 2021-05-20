@@ -5,6 +5,8 @@ class MoreThan4{
 }
 
 class MT4 {
+
+    int x;
     public int Start(int p1, int p2, int p3 , int p4, int p5, int p6){
 	int aux ;
         System.out.println(p1);

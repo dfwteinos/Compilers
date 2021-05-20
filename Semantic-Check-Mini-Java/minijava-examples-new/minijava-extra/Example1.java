@@ -9,7 +9,7 @@ class Test1 {
 
     public int Start(int b,boolean c)
     {
-    	boolean ntb ;
+    boolean ntb ;
 	int[] nti;
 	int ourint;
 	nti = new int[b];
